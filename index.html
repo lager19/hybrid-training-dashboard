@@ -872,7 +872,10 @@ document.addEventListener('DOMContentLoaded', function() {
   let cfg = null;
   try { cfg = JSON.parse(localStorage.getItem('userConfig') || 'null'); } catch(e) {}
   cfg = migrateUserConfig(cfg);
-  if (!cfg || !cfg.worker || !cfg.worker.url || !cfg.race || !cfg.race.date) {
+  // Wizard nur beim Initial-Setup: wenn weder setupDoneAt noch worker.url existieren.
+  // Fehlende Einzelfelder können später über Settings-Menü ergänzt werden.
+  const setupDone = cfg && (cfg.setupDoneAt || (cfg.worker && cfg.worker.url));
+  if (!setupDone) {
     document.getElementById('wiz-overlay').classList.remove('hidden');
     document.getElementById('wiz-reopen-btn').style.display = 'none';
     wizShowStep(0);
@@ -881,6 +884,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('wiz-reopen-btn').style.display = 'block';
     applyUserConfig(cfg);
     applySportsVisibility(cfg.sports || ['run','strength','mobility']);
+    // Falls Race-Datum fehlt: kleine Banner-Hinweis
+    if (!cfg.race || !cfg.race.date) {
+      const msg = document.getElementById('strava-msg');
+      if (msg) msg.innerHTML = '<div class="alert info">ℹ️ Wettkampf-Datum fehlt — öffne ⚙️ Einstellungen um Ziele zu setzen.</div>';
+    }
   }
 });
 </script>
@@ -1546,7 +1554,9 @@ function getNextPendingPlan(filter) {
     const w = NEXT_WORKOUTS[wd];
     if (!w) continue;
     if (filter && filter !== 'all' && w.type !== filter) continue;
-    if (i === 0) {
+    // Bei heute UND morgen prüfen ob bereits Strava-Match existiert (für den Fall dass nach dem Workout noch geguckt wird).
+    // Für i>1 macht Match-Check keinen Sinn weil Zukunft.
+    if (i <= 1) {
       const match = findMatchForDay(acts, wd, d);
       if (match) continue;
     }
@@ -1713,33 +1723,33 @@ setTimeout(() => { renderNextWorkout(); setInterval(renderNextWorkout, 24*60*60*
 </script>
 
 
-<!-- ============ PHASE 2: TRENDS & PERFORMANCE ============ -->
-<div data-view="both" id="trends-section">
+<!-- ============ PHASE 2: TRENDS & PERFORMANCE (auf allen Tabs sichtbar) ============ -->
+<div id="trends-section">
 <h2>📈 Trends & Form-Score</h2>
 <div class="grid cols-4" style="margin-bottom:12px;">
   <div class="card kpi" id="form-score-card" style="background:linear-gradient(135deg,#0A2540 0%,#1E3A5F 100%); color:white; border:none;">
     <div class="label" style="color:#7DD3FC;">Form-Score</div>
-    <div class="value" id="kpi-form-score" style="color:white;">—</div>
-    <div class="delta" id="kpi-form-trend" style="color:#7DD3FC;">—</div>
+    <div class="value" id="kpi-form-score" style="color:white;">⏳</div>
+    <div class="delta" id="kpi-form-trend" style="color:#7DD3FC;">Wartet auf Strava-Sync</div>
   </div>
   <div class="card kpi">
     <div class="label">HF-Trend (Easy)</div>
-    <div class="value" id="kpi-hf-trend">—</div>
-    <div class="delta" id="kpi-hf-trend-meta">letzte 4 vs vorherige 4 Wo</div>
+    <div class="value" id="kpi-hf-trend">⏳</div>
+    <div class="delta" id="kpi-hf-trend-meta">braucht ≥8 Easy-Läufe</div>
   </div>
   <div class="card kpi">
     <div class="label">Pace-Trend (Easy)</div>
-    <div class="value" id="kpi-pace-trend">—</div>
-    <div class="delta" id="kpi-pace-trend-meta">letzte 4 vs vorherige 4 Wo</div>
+    <div class="value" id="kpi-pace-trend">⏳</div>
+    <div class="delta" id="kpi-pace-trend-meta">braucht ≥8 Easy-Läufe</div>
   </div>
   <div class="card kpi" id="ramp-rate-card">
     <div class="label">Volumen-Ramp</div>
-    <div class="value" id="kpi-ramp-rate">—</div>
+    <div class="value" id="kpi-ramp-rate">⏳</div>
     <div class="delta" id="kpi-ramp-meta">Wo-vs-Vorwoche</div>
   </div>
 </div>
 
-<div class="grid cols-2" style="margin-bottom:12px;">
+<div class="grid cols-2" data-view="both,run" style="margin-bottom:12px;">
   <div class="card">
     <h3>HF bei Easy-Läufen (Cardio-Fitness-Proxy)</h3>
     <div class="muted" style="font-size:11px; margin-bottom:6px;">Sinkende HF bei gleicher Pace = Aerobic-Fitness verbessert sich.</div>
@@ -2044,6 +2054,11 @@ async function stravaPull() {
     updateChartsFromStrava(acts);
     if (typeof renderNextWorkout === 'function') renderNextWorkout();
     if (typeof renderLastActivity === 'function') renderLastActivity();
+    if (typeof renderSportSpecificNext === 'function') {
+      // Re-render sport-spezifische Next-Cards mit frischen Strava-Daten (überspringt erledigte Tage)
+      renderSportSpecificNext('run', 'next-run-content');
+      renderSportSpecificNext('strength', 'next-strength-content');
+    }
     if (typeof renderTrends === 'function') renderTrends(acts);
     if (typeof maybeTriggerRPE === 'function') maybeTriggerRPE(acts);
     document.getElementById('strava-msg').innerHTML = `<div class="alert success">✅ ${acts.length} Aktivitäten · Charts live aktualisiert</div>`;
@@ -2436,6 +2451,7 @@ function renderTrendsKPIs(activities) {
 
   // HF-Trend KPI
   const hfEl = document.getElementById('kpi-hf-trend');
+  const hfMeta = document.getElementById('kpi-hf-trend-meta');
   if (hfEl) {
     if (easy.length >= 8) {
       const last4 = easy.slice(-4).reduce((s,a)=>s+a.average_heartrate,0)/4;
@@ -2443,48 +2459,73 @@ function renderTrendsKPIs(activities) {
       const diff = last4 - prev4;
       hfEl.textContent = (diff > 0 ? '+' : '') + Math.round(diff) + ' bpm';
       hfEl.style.color = diff < -1 ? 'var(--success)' : diff > 2 ? 'var(--danger)' : '';
+      if (hfMeta) hfMeta.textContent = `letzte 4 vs vorh. 4 Easy-Läufe`;
     } else {
       hfEl.textContent = `n=${easy.length}`;
+      hfEl.style.color = 'var(--muted)';
+      if (hfMeta) hfMeta.textContent = `brauche ≥8 Easy-Läufe (hast ${easy.length})`;
     }
   }
   // Pace-Trend KPI
   const pcEl = document.getElementById('kpi-pace-trend');
+  const pcMeta = document.getElementById('kpi-pace-trend-meta');
   if (pcEl) {
     if (easy.length >= 8) {
       const last4 = easy.slice(-4).map(a => (a.moving_time/60)/(a.distance/1000));
       const prev4 = easy.slice(-8,-4).map(a => (a.moving_time/60)/(a.distance/1000));
       const lastAvg = last4.reduce((s,v)=>s+v,0)/4;
       const prevAvg = prev4.reduce((s,v)=>s+v,0)/4;
-      const diff = lastAvg - prevAvg; // negativ = schneller
+      const diff = lastAvg - prevAvg;
       const sign = diff < 0 ? '−' : '+';
       const sec = Math.round(Math.abs(diff)*60);
       pcEl.textContent = `${sign}${sec}s/km`;
       pcEl.style.color = diff < -0.03 ? 'var(--success)' : diff > 0.05 ? 'var(--danger)' : '';
+      if (pcMeta) pcMeta.textContent = `letzte 4 vs vorh. 4 Easy-Läufe`;
     } else {
       pcEl.textContent = `n=${easy.length}`;
+      pcEl.style.color = 'var(--muted)';
+      if (pcMeta) pcMeta.textContent = `brauche ≥8 Easy-Läufe (hast ${easy.length})`;
     }
   }
   // Ramp-Rate KPI
   const ramp = computeRampRate(activities);
   const rrEl = document.getElementById('kpi-ramp-rate');
+  const rampMeta = document.getElementById('kpi-ramp-meta');
   if (rrEl) {
-    if (ramp.rampWoW != null) {
+    if (ramp.rampWoW != null && !isNaN(ramp.rampWoW)) {
       rrEl.textContent = (ramp.rampWoW > 0 ? '+' : '') + ramp.rampWoW.toFixed(0) + '%';
       rrEl.style.color = Math.abs(ramp.rampWoW) <= 10 ? 'var(--success)' : ramp.rampWoW > 25 ? 'var(--danger)' : 'var(--warn)';
-      const metaEl = document.getElementById('kpi-ramp-meta');
-      if (metaEl) metaEl.innerHTML = `${ramp.kmThis.toFixed(1)} vs ${ramp.kmLast.toFixed(1)} km${Math.abs(ramp.rampWoW) > 25 ? ' ⚠️' : ''}`;
-    } else {
+      if (rampMeta) rampMeta.innerHTML = `${ramp.kmThis.toFixed(1)} vs ${ramp.kmLast.toFixed(1)} km${Math.abs(ramp.rampWoW) > 25 ? ' ⚠️' : ''}`;
+    } else if (ramp.kmThis > 0) {
       rrEl.textContent = '—';
+      rrEl.style.color = 'var(--muted)';
+      if (rampMeta) rampMeta.textContent = `Vorwoche: 0 km (kein Vergleich)`;
+    } else {
+      rrEl.textContent = '0 km';
+      rrEl.style.color = 'var(--muted)';
+      if (rampMeta) rampMeta.textContent = `Diese Woche noch keine km`;
     }
   }
-  // Form-Score
+  // Form-Score — auch mit wenig Daten zumindest Baseline zeigen
   const form = computeFormScore(activities);
   const fsEl = document.getElementById('kpi-form-score');
-  if (fsEl) fsEl.textContent = form.score;
+  if (fsEl) {
+    if (activities.length === 0) {
+      fsEl.textContent = '—';
+    } else {
+      fsEl.textContent = form.score;
+    }
+  }
   const ftEl = document.getElementById('kpi-form-trend');
   if (ftEl) {
-    const arrow = form.score >= 70 ? '↑ stark' : form.score >= 55 ? '→ solide' : form.score >= 40 ? '→ ok' : '↓ vorsichtig';
-    ftEl.textContent = arrow + ' · ' + form.factors.slice(0,2).map(f=>f.t).join(' · ');
+    if (activities.length === 0) {
+      ftEl.textContent = 'Keine Aktivitäten gefunden';
+    } else if (form.factors.length === 0) {
+      ftEl.textContent = `Baseline (${activities.length} Activities, brauchen mehr Easy-Läufe für Trend)`;
+    } else {
+      const arrow = form.score >= 70 ? '↑ stark' : form.score >= 55 ? '→ solide' : form.score >= 40 ? '→ ok' : '↓ vorsichtig';
+      ftEl.textContent = arrow + ' · ' + form.factors.slice(0,2).map(f=>f.t).join(' · ');
+    }
   }
 }
 
