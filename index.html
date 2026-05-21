@@ -10,27 +10,34 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
 <style>
 :root { color-scheme: light;
-  /* Fracto Design System — Navy / Cyan / Light-Blue */
-  --bg:#F4F7FB; --card:#ffffff; --text:#0A1F3F; --muted:#5B6A85; --border:#D8E0EC;
-  --primary:#0A2540;            /* Fracto Navy */
-  --primary-light:#1E3A5F;       /* Navy 80% */
+  /* Fracto Design — minimale Palette: Navy / Cyan / Slate */
+  --bg:#F7F8FA;
+  --card:#ffffff;
+  --text:#0A1F3F;
+  --muted:#64748b;
+  --border:#E5E8EE;
+  --primary:#0A2540;            /* Navy */
+  --primary-light:#1E3A5F;
   --accent:#06B6D4;              /* Cyan */
-  --accent-light:#7DD3FC;        /* Light Blue */
-  --success:#10B981; --warn:#F59E0B; --danger:#EF4444;
-  --z1:#7DD3FC;                  /* Light Blue */
-  --z2:#06B6D4;                  /* Cyan */
-  --z3:#0A2540;                  /* Navy */
-  --z4:#F59E0B;                  /* Warning Amber */
-  --z5:#EF4444;                  /* Red */
+  --accent-light:#CFF4FB;
+  --success:#10B981;
+  --warn:#F59E0B;
+  --danger:#EF4444;
+  /* Zonen-Skala: monochrome Cyan-Navy-Skala statt bunt */
+  --z1:#CFF4FB;
+  --z2:#7DD3FC;
+  --z3:#06B6D4;
+  --z4:#0E7490;
+  --z5:#0A2540;
 }
 * { box-sizing:border-box; }
 body { margin:0; padding:0; background:var(--bg); color:var(--text); font-family:'Inter','-apple-system',BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:14px; line-height:1.5; font-feature-settings:"cv11","ss01"; -webkit-font-smoothing:antialiased; }
 h1,h2,h3,h4,strong { font-weight:700; letter-spacing:-0.01em; }
 .value { font-weight:800; letter-spacing:-0.02em; }
 .container { max-width:1200px; margin:0 auto; padding:16px; }
-h1 { margin:0 0 4px; font-size:22px; font-weight:700; }
-h2 { margin:24px 0 12px; font-size:16px; font-weight:600; color:var(--text); }
-h3 { margin:0 0 8px; font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+h1 { margin:0 0 4px; font-size:22px; font-weight:800; letter-spacing:-0.02em; }
+h2 { margin:28px 0 14px; font-size:14px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
+h3 { margin:0 0 8px; font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
 .sub { color:var(--muted); font-size:13px; margin-bottom:16px; }
 .grid { display:grid; gap:12px; }
 .cols-2 { grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -38,13 +45,13 @@ h3 { margin:0 0 8px; font-size:13px; font-weight:600; color:var(--muted); text-t
 .cols-4 { grid-template-columns:repeat(4,minmax(0,1fr)); }
 .cols-5 { grid-template-columns:repeat(5,minmax(0,1fr)); }
 @media (max-width:800px){ .cols-3,.cols-4,.cols-5,.cols-2 { grid-template-columns:1fr; } }
-.card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:14px; }
-.kpi .label { font-size:11px; text-transform:uppercase; color:var(--muted); letter-spacing:.5px; }
-.kpi .value { font-size:24px; font-weight:700; margin:4px 0; }
+.card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; box-shadow:0 1px 2px rgba(10,37,64,0.03); }
+.kpi .label { font-size:11px; text-transform:uppercase; color:var(--muted); letter-spacing:.5px; font-weight:600; }
+.kpi .value { font-size:24px; font-weight:800; margin:4px 0; letter-spacing:-0.02em; }
 .kpi .delta { font-size:12px; color:var(--muted); }
 .kpi .delta.up { color:var(--success); }
 .kpi .delta.down { color:var(--danger); }
-.progress { background:var(--border); border-radius:4px; height:6px; overflow:hidden; margin-top:8px; }
+.progress { background:var(--border); border-radius:4px; height:5px; overflow:hidden; margin-top:8px; }
 .progress > div { height:100%; background:var(--primary); transition:width .3s; }
 .progress.success > div { background:var(--success); }
 .progress.warn > div { background:var(--warn); }
@@ -59,12 +66,12 @@ table { width:100%; border-collapse:collapse; font-size:12px; }
 th,td { padding:6px 8px; text-align:left; border-bottom:1px solid var(--border); }
 th { font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; font-size:11px; }
 td.num { text-align:right; font-variant-numeric:tabular-nums; }
-.badge { display:inline-block; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:600; }
-.badge.b1 { background:#dbeafe; color:#1e40af; }
-.badge.b2 { background:#fce7f3; color:#9d174d; }
-.badge.deload { background:#fef3c7; color:#92400e; }
-.badge.taper { background:#dcfce7; color:#166534; }
-.badge.peak { background:#fee2e2; color:#991b1b; }
+.badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
+.badge.b1 { background:var(--accent-light); color:var(--primary); }
+.badge.b2 { background:var(--accent-light); color:var(--primary); }
+.badge.deload { background:var(--bg); color:var(--muted); border:1px solid var(--border); }
+.badge.taper { background:var(--accent-light); color:var(--primary); }
+.badge.peak { background:var(--primary); color:white; }
 .session { display:flex; gap:8px; padding:8px; border-radius:6px; align-items:center; cursor:pointer; transition:background .15s; }
 .session:hover { background:#f1f5f9; }
 .session .ico { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
@@ -136,6 +143,26 @@ hr { border:none; border-top:1px solid var(--border); margin:20px 0; }
 .wiz-copy-row button { padding:6px 12px; background:var(--primary); color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; }
 #wiz-reopen-btn { position:fixed; bottom:16px; right:16px; background:white; border:1px solid var(--border); padding:8px 12px; border-radius:6px; font-size:12px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.1); z-index:100; }
 #wiz-reopen-btn:hover { background:var(--bg); }
+@keyframes spin { from { transform:rotate(0deg);} to { transform:rotate(360deg);} }
+.spinning { display:inline-block; animation:spin 1s linear infinite; }
+#strava-sync-btn:disabled { opacity:0.7; cursor:wait; }
+#strava-sync-btn:hover:not(:disabled) { background:#0891B2; }
+/* Collapsible Card */
+.collapsible-trigger { cursor:pointer; user-select:none; }
+.collapsible-trigger:hover { opacity:0.9; }
+.collapsible-content { overflow:hidden; transition:max-height .3s ease; max-height:0; }
+.collapsible-content.open { max-height:1500px; }
+.chev { display:inline-block; transition:transform .25s; }
+.chev.open { transform:rotate(180deg); }
+/* Modal */
+.modal-overlay { position:fixed; inset:0; background:rgba(10,37,64,0.65); backdrop-filter:blur(3px); z-index:9000; display:flex; align-items:flex-start; justify-content:center; padding:40px 16px; overflow-y:auto; }
+.modal-overlay.hidden { display:none; }
+.modal-box { background:white; border-radius:10px; max-width:600px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.4); overflow:hidden; }
+.modal-header { background:linear-gradient(135deg,#0A2540 0%,#1E3A5F 100%); color:white; padding:18px 20px; display:flex; justify-content:space-between; align-items:start; gap:12px; }
+.modal-header h3 { color:white; margin:0; font-size:17px; font-weight:700; text-transform:none; letter-spacing:0; }
+.modal-close { background:rgba(255,255,255,0.1); border:none; color:white; width:28px; height:28px; border-radius:6px; cursor:pointer; font-size:18px; line-height:1; }
+.modal-close:hover { background:rgba(255,255,255,0.25); }
+.modal-body { padding:18px 20px; max-height:65vh; overflow-y:auto; }
 </style>
 </head>
 <body>
@@ -370,6 +397,120 @@ hr { border:none; border-top:1px solid var(--border); margin:20px 0; }
 </div>
 
 <button id="wiz-reopen-btn" onclick="wizOpen(true)" style="display:none;">⚙️ Setup neu starten</button>
+
+<!-- ============ DETAIL-MODAL für Last/Next Einheit ============ -->
+<div id="detail-modal" class="modal-overlay hidden" onclick="if(event.target===this) closeDetailModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="detail-modal-title">—</h3>
+      <button class="modal-close" onclick="closeDetailModal()" aria-label="Schließen">×</button>
+    </div>
+    <div class="modal-body" id="detail-modal-body">—</div>
+  </div>
+</div>
+
+<script>
+function closeDetailModal() { document.getElementById('detail-modal').classList.add('hidden'); }
+function openDetailModal(title, bodyHTML) {
+  document.getElementById('detail-modal-title').textContent = title;
+  document.getElementById('detail-modal-body').innerHTML = bodyHTML;
+  document.getElementById('detail-modal').classList.remove('hidden');
+}
+// Matche Strava-Activity → Plan-Workout für gleichen Tag
+function getPlanWorkoutForActivity(a) {
+  if (!a || !window.NEXT_WORKOUTS) return null;
+  const d = new Date(a.start_date);
+  const wd = d.getDay();
+  const w = window.NEXT_WORKOUTS ? window.NEXT_WORKOUTS[wd] : (typeof NEXT_WORKOUTS !== 'undefined' ? NEXT_WORKOUTS[wd] : null);
+  if (!w) return null;
+  // Type-Check ob Activity passt
+  const matchingTypes = { run: ['Run','VirtualRun','TrailRun'], strength: ['WeightTraining','Workout'], mobility: ['Yoga','StretchingSession'] };
+  const typesForPlan = matchingTypes[w.type] || [];
+  if (typesForPlan.includes(a.type)) return w;
+  return null;
+}
+function openLastActivityModal() {
+  const a = (typeof getLatestActivity === 'function') ? getLatestActivity() : null;
+  if (!a) return openDetailModal('Letzte Einheit', '<p>Keine Strava-Aktivität gefunden.</p>');
+  const planW = getPlanWorkoutForActivity(a);
+  const d = new Date(a.start_date);
+  const dStr = d.toLocaleDateString('de-DE',{weekday:'long', day:'2-digit', month:'long'}) + ' · ' + d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  const km = a.distance ? (a.distance/1000).toFixed(2) + ' km' : '';
+  const dur = Math.round(a.moving_time/60) + ' min';
+  const paceSec = a.distance > 0 ? Math.round(a.moving_time/(a.distance/1000)) : 0;
+  const pace = paceSec ? `${Math.floor(paceSec/60)}:${String(paceSec%60).padStart(2,'0')}/km` : '';
+  const hfStr = a.average_heartrate ? `${Math.round(a.average_heartrate)} bpm avg` : '';
+  const hfMax = a.max_heartrate ? `${Math.round(a.max_heartrate)} bpm max` : '';
+  const elev = a.total_elevation_gain ? `${Math.round(a.total_elevation_gain)} m ↗` : '';
+  const rpe = localStorage.getItem('rpe_'+a.id);
+  const analysis = (typeof analyzeActivity === 'function') ? analyzeActivity(a) : null;
+  const planTitle = planW ? `${planW.emoji} ${planW.name}` : '—';
+  const html = `
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; font-weight:600;">Aus deinem Plan</div>
+      <div style="font-size:16px; font-weight:700; margin:2px 0 4px;">${planTitle}</div>
+      <div style="font-size:11px; color:var(--muted);">Strava-Titel: ${a.name || '—'}</div>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:12px 0; padding:12px; background:var(--bg); border-radius:6px;">
+      <div><div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px;">Distanz</div><div style="font-weight:700;">${km || '—'}</div></div>
+      <div><div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px;">Dauer</div><div style="font-weight:700;">${dur}</div></div>
+      <div><div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px;">Pace</div><div style="font-weight:700;">${pace || '—'}</div></div>
+      <div><div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px;">HF avg</div><div style="font-weight:700;">${hfStr || '—'}</div></div>
+      <div><div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px;">HF max</div><div style="font-weight:700;">${hfMax || '—'}</div></div>
+      <div><div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px;">Höhenmeter</div><div style="font-weight:700;">${elev || '—'}</div></div>
+    </div>
+    <div style="margin:14px 0;">
+      <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; font-weight:600; margin-bottom:6px;">Analyse</div>
+      ${(analysis && analysis.analysis && analysis.analysis.length) ? analysis.analysis.map(p => `<div style="font-size:13px; padding:6px 10px; background:${p.c==='good'?'#ecfdf5':p.c==='warn'?'#fef3c7':'#eff6ff'}; border-left:3px solid ${p.c==='good'?'#10B981':p.c==='warn'?'#F59E0B':'#06B6D4'}; border-radius:0 4px 4px 0; margin-bottom:4px;">${p.c==='good'?'✅':p.c==='warn'?'⚠️':'ℹ️'} ${p.t}</div>`).join('') : '<div class="muted" style="font-size:12px;">Keine spezifische Analyse verfügbar.</div>'}
+    </div>
+    <div style="margin:14px 0; padding-top:12px; border-top:1px solid var(--border);">
+      <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; font-weight:600; margin-bottom:6px;">RPE (subjektive Belastung)</div>
+      ${rpe ? `<div style="font-size:20px; font-weight:800;">${rpe}/10</div>` : `<button onclick="askRPE('${a.id}'); closeDetailModal();" style="background:var(--primary); color:white; border:none; padding:8px 14px; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer;">RPE eintragen</button>`}
+    </div>
+    <div style="font-size:11px; color:var(--muted); margin-top:14px;">Datum: ${dStr}</div>
+    <div style="margin-top:6px;"><a href="https://strava.com/activities/${a.id}" target="_blank" style="color:var(--accent); font-size:12px; font-weight:600;">Auf Strava ansehen ↗</a></div>
+  `;
+  openDetailModal(planTitle !== '—' ? planTitle : (a.name || a.type), html);
+}
+function openNextWorkoutModal() {
+  if (typeof getNextPendingPlan !== 'function') return;
+  const next = getNextPendingPlan(null);
+  if (!next) return openDetailModal('Nächste Einheit', '<p>Keine offene Einheit in den nächsten 14 Tagen.</p>');
+  const w = next.workout;
+  const dayLabels = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+  const dStr = dayLabels[next.weekday] + ' ' + next.date.toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'});
+  const ago = next.daysFromNow === 0 ? 'heute' : next.daysFromNow === 1 ? 'morgen' : `in ${next.daysFromNow} Tagen`;
+  const phaseHTML = w.phases.map(p => `
+    <div style="background:var(--bg); border-left:3px solid var(--accent); border-radius:0 6px 6px 0; padding:10px 12px; margin-bottom:6px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+        <strong style="font-size:14px;">${p.t}</strong>
+        <span style="color:var(--muted); font-size:11px; font-weight:600;">${p.min} min</span>
+      </div>
+      <div style="font-size:13px; line-height:1.5; color:var(--text);">${typeof adaptPhaseDetail === 'function' ? adaptPhaseDetail(p.detail, w.type) : p.detail}</div>
+    </div>`).join('');
+  const html = `
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; font-weight:600;">${dStr} · ${ago}</div>
+      <div style="font-size:20px; font-weight:700; margin:4px 0;">${w.emoji} ${w.name}</div>
+      <div style="color:var(--muted); font-size:13px;">Geplante Dauer: <strong>${w.dur} min</strong> (inkl. Puffer)</div>
+    </div>
+    <div style="margin-top:10px;">
+      <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; font-weight:600; margin-bottom:6px;">Workout-Aufbau</div>
+      ${phaseHTML}
+    </div>
+    <div style="margin-top:12px; padding:10px 12px; background:#fef3c7; border:1px solid #fde68a; border-radius:6px; font-size:13px; color:#92400e;">⚠️ ${w.note}</div>
+  `;
+  openDetailModal(w.emoji + ' ' + w.name, html);
+}
+// ESC zum Schließen
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeDetailModal();
+    if (typeof dismissRPE === 'function') dismissRPE();
+    if (typeof closeSettings === 'function') closeSettings();
+  }
+});
+</script>
 
 <!-- ============ SETTINGS DRAWER ============ -->
 <div id="settings-overlay" class="wiz-overlay hidden" onclick="if(event.target===this) closeSettings()">
@@ -819,11 +960,14 @@ function applyUserConfig(cfg) {
   // Marathon-Datum + Countdown
   if (cfg.race && cfg.race.date) {
     window.MARATHON = new Date(cfg.race.date);
-    const headerSub = document.querySelector('.container .card div[style*="cbd5e1"]');
+    const headerSub = document.getElementById('header-sub');
     const raceName = cfg.race.distanceKm >= 42 ? 'Marathon' : (cfg.race.distanceKm >= 21 ? 'Halbmarathon' : (cfg.race.distanceKm >= 10 ? '10 km' : '5 km'));
-    if (headerSub) headerSub.textContent = `${raceName} — ${new Date(cfg.race.date).toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'})}`;
+    if (headerSub) headerSub.textContent = `${raceName} · ${new Date(cfg.race.date).toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'})}`;
     const cdEl = document.getElementById('countdown');
     if (cdEl) cdEl.textContent = Math.ceil((new Date(cfg.race.date) - new Date())/(1000*60*60*24));
+  } else {
+    const headerSub = document.getElementById('header-sub');
+    if (headerSub) headerSub.textContent = 'Wettkampf-Datum noch nicht gesetzt — Einstellungen öffnen';
   }
 
   // Goal-KPIs
@@ -845,8 +989,8 @@ function applyUserConfig(cfg) {
 
   // Title
   if (cfg.athleteName) {
-    const h1 = document.querySelector('.container h1');
-    if (h1) h1.innerHTML = `🏃‍♂️ ${cfg.athleteName}'s Training Dashboard`;
+    const h1 = document.getElementById('header-title');
+    if (h1) h1.textContent = `${cfg.athleteName}'s Training Dashboard`;
   }
 
   // LTHR-KPI initial setzen falls user-eingegeben
@@ -924,8 +1068,8 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="card" style="background:linear-gradient(135deg,#0A2540 0%,#1E3A5F 100%); color:white; border:none; position:relative;">
 <div style="display:flex; justify-content:space-between; align-items:start; flex-wrap:wrap; gap:12px;">
 <div>
-<h1 style="color:white; margin:0; font-weight:800;">Hybrid Training Dashboard</h1>
-<div style="color:#7DD3FC; font-size:13px; margin-top:4px; font-weight:500;">Lade Wettkampf-Daten…</div>
+<h1 id="header-title" style="color:white; margin:0; font-weight:800;">Hybrid Training Dashboard</h1>
+<div id="header-sub" style="color:#7DD3FC; font-size:13px; margin-top:4px; font-weight:500;">Lade Wettkampf-Daten…</div>
 </div>
 <div style="text-align:right;">
 <div id="countdown" style="font-size:32px; font-weight:800; color:white;">--</div>
@@ -936,7 +1080,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <div id="phase-badge" style="background:#06B6D4; color:white; padding:4px 10px; border-radius:14px; font-size:12px; font-weight:700;">Phase wird geladen…</div>
 <div id="week-badge" style="background:rgba(125,211,252,0.2); color:#7DD3FC; padding:4px 10px; border-radius:14px; font-size:12px; font-weight:700;">Woche --/21</div>
 <div style="flex:1;"></div>
-<button onclick="if(typeof stravaPull==='function') stravaPull()" style="background:#06B6D4; color:white; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">🔄 Strava-Sync</button>
+<button id="strava-sync-btn" onclick="if(typeof stravaPull==='function') stravaPull()" style="background:#06B6D4; color:white; border:none; padding:6px 14px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; min-width:130px; transition:opacity .15s;"><span id="strava-sync-btn-icon">🔄</span> <span id="strava-sync-btn-text">Strava-Sync</span></button>
 <button onclick="openSettings()" title="Einstellungen" style="background:rgba(255,255,255,0.1); color:white; border:none; padding:6px 10px; border-radius:6px; font-size:14px; cursor:pointer;">⚙️</button>
 </div>
 </div>
@@ -945,8 +1089,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <div id="adapt-status"></div>
 
-<div class="card" id="tabs-container" style="padding:6px; margin-bottom:12px;">
-  <div style="display:flex; gap:4px; background:#f1f5f9; padding:4px; border-radius:6px;" id="tabs-row">
+<div class="card" id="tabs-container" style="padding:4px; margin-bottom:12px; box-shadow:none;">
+  <div style="display:flex; gap:2px; background:var(--bg); padding:3px; border-radius:8px;" id="tabs-row">
     <button id="tab-both" data-sport="both" class="tab-btn active" onclick="setView('both')" style="flex:1; background:white; border:none; padding:8px; border-radius:4px; font-weight:600; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.1);">📊 Übersicht</button>
     <button id="tab-run" data-sport="run" class="tab-btn" onclick="setView('run')" style="flex:1; background:transparent; border:none; padding:8px; border-radius:4px; font-weight:600; cursor:pointer; color:var(--muted);">🏃 Laufen</button>
     <button id="tab-strength" data-sport="strength" class="tab-btn" onclick="setView('strength')" style="flex:1; background:transparent; border:none; padding:8px; border-radius:4px; font-weight:600; cursor:pointer; color:var(--muted);">💪 Krafttraining</button>
@@ -1056,14 +1200,14 @@ function renderLTHR() {
 </script>
 
 <div data-view="both">
-<h2>📍 Letzte & Nächste Einheit</h2>
+<h2>Letzte & Nächste Einheit</h2>
 <div class="grid cols-2" id="last-next-grid">
-  <div class="card" id="last-activity-card" style="background:linear-gradient(135deg,#06B6D4 0%,#0891B2 100%); color:white; border:none;">
-    <div style="font-size:11px; text-transform:uppercase; color:#cffafe; letter-spacing:.5px; margin-bottom:8px;">✅ Letzte erledigte Einheit</div>
-    <div id="last-activity-content"><div style="color:#cffafe;">⏳ Lade aus Strava…</div></div>
+  <div class="card" id="last-activity-card" style="background:white; border:1px solid var(--border); cursor:pointer; transition:transform .15s, box-shadow .15s;" onclick="openLastActivityModal()" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 14px rgba(10,37,64,0.08)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
+    <div style="font-size:10px; text-transform:uppercase; color:var(--muted); letter-spacing:.5px; margin-bottom:8px; font-weight:600;">Letzte erledigte Einheit</div>
+    <div id="last-activity-content"><div class="muted">⏳ Lade aus Strava…</div></div>
   </div>
-  <div class="card" id="next-workout-card" style="background:linear-gradient(135deg,#0A2540 0%,#1E3A5F 100%); color:white; border:none;">
-    <div style="font-size:11px; text-transform:uppercase; color:#7DD3FC; letter-spacing:.5px; margin-bottom:8px;">📍 Nächste anstehende Einheit</div>
+  <div class="card" id="next-workout-card" style="background:linear-gradient(135deg,#0A2540 0%,#1E3A5F 100%); color:white; border:none; cursor:pointer; transition:transform .15s, box-shadow .15s;" onclick="openNextWorkoutModal()" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 8px 20px rgba(10,37,64,0.25)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
+    <div style="font-size:10px; text-transform:uppercase; color:#7DD3FC; letter-spacing:.5px; margin-bottom:8px; font-weight:600;">Nächste anstehende Einheit · Klick für Details</div>
     <div id="next-workout-content"><div style="color:#7DD3FC;">⏳ Lade…</div></div>
   </div>
 </div>
@@ -1293,48 +1437,37 @@ function renderLastActivity() {
   if (!target) return;
   const a = getLatestActivity();
   if (!a) {
-    target.innerHTML = '<div style="color:#cffafe;">Noch keine Strava-Aktivität gefunden. Nach Sync erscheint hier deine letzte Einheit.</div>';
+    target.innerHTML = '<div class="muted" style="font-size:13px;">Noch keine Strava-Aktivität gefunden.</div>';
     return;
   }
-  const analysis = analyzeActivity(a);
+  const planW = (typeof getPlanWorkoutForActivity === 'function') ? getPlanWorkoutForActivity(a) : null;
   const d = new Date(a.start_date);
-  const dStr = d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}) + ' ' + d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
   const daysAgo = Math.floor((new Date() - d) / (1000*60*60*24));
   const daysAgoStr = daysAgo === 0 ? 'heute' : daysAgo === 1 ? 'gestern' : `vor ${daysAgo} Tagen`;
+  const dTime = d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
   const typeEmoji = { Run:'🏃', WeightTraining:'💪', Ride:'🚴', Swim:'🏊', Yoga:'🧘', Hike:'🥾', Walk:'🚶' }[a.type] || '🏅';
-  const km = a.distance ? (a.distance/1000).toFixed(2) + ' km' : '';
+  // Plan-Titel matchen, falls vorhanden
+  const displayTitle = planW ? planW.name : (a.name || a.type);
+  const km = a.distance ? (a.distance/1000).toFixed(1) + ' km' : '';
   const dur = Math.round(a.moving_time / 60) + ' min';
   const paceSec = a.distance > 0 ? Math.round(a.moving_time / (a.distance/1000)) : 0;
   const pace = paceSec ? `${Math.floor(paceSec/60)}:${String(paceSec%60).padStart(2,'0')}/km` : '';
-  const hf = a.average_heartrate ? `${Math.round(a.average_heartrate)} bpm avg` : '';
-  const elev = a.total_elevation_gain ? `${Math.round(a.total_elevation_gain)} m ↗` : '';
-  const meta = [km, dur, pace, hf, elev].filter(Boolean).join(' · ');
-
-  const analysisHTML = analysis && analysis.analysis && analysis.analysis.length
-    ? analysis.analysis.map(p => {
-        const c = p.c === 'good' ? '✅' : p.c === 'warn' ? '⚠️' : 'ℹ️';
-        const col = p.c === 'good' ? '#bbf7d0' : p.c === 'warn' ? '#fde68a' : '#bfdbfe';
-        return `<div style="font-size:11px; color:${col}; margin-top:2px;">${c} ${p.t}</div>`;
-      }).join('')
-    : '';
-
-  // RPE-Anzeige falls schon eingetragen
-  const rpeKey = 'rpe_' + a.id;
-  const rpe = localStorage.getItem(rpeKey);
-  const rpeStr = rpe ? `<div style="margin-top:6px; padding:4px 8px; background:rgba(255,255,255,0.15); border-radius:4px; display:inline-block; font-size:11px;">RPE: <strong>${rpe}/10</strong></div>` : `<button onclick="askRPE('${a.id}')" style="margin-top:6px; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3); color:white; padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer;">📊 RPE eintragen</button>`;
+  const hf = a.average_heartrate ? `${Math.round(a.average_heartrate)} bpm` : '';
+  const meta = [km, dur, pace, hf].filter(Boolean).join(' · ');
+  const rpe = localStorage.getItem('rpe_' + a.id);
+  const rpeBadge = rpe ? `<span style="margin-left:auto; background:var(--bg); border:1px solid var(--border); padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600;">RPE ${rpe}/10</span>` : '';
 
   target.innerHTML = `
-    <div style="display:flex; align-items:center; gap:10px;">
-      <div style="font-size:28px;">${typeEmoji}</div>
-      <div style="flex:1;">
-        <div style="font-weight:700; font-size:15px;">${a.name || a.type}</div>
-        <div style="font-size:11px; color:#cffafe;">${dStr} · ${daysAgoStr}</div>
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+      <div style="font-size:30px;">${typeEmoji}</div>
+      <div style="flex:1; min-width:0;">
+        <div style="font-weight:700; font-size:15px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${displayTitle}</div>
+        <div style="font-size:11px; color:var(--muted);">${daysAgoStr} · ${dTime}${planW ? ' · ✓ matched mit Plan' : ''}</div>
       </div>
+      ${rpeBadge}
     </div>
-    <div style="margin-top:8px; font-size:12px; color:#cffafe;">${meta}</div>
-    <div style="margin-top:8px;">${analysisHTML}</div>
-    ${rpeStr}
-    <div style="margin-top:8px;"><a href="https://strava.com/activities/${a.id}" target="_blank" style="color:#7DD3FC; font-size:11px;">Auf Strava ansehen ↗</a></div>
+    <div style="font-size:12px; color:var(--muted);">${meta}</div>
+    <div style="margin-top:8px; font-size:11px; color:var(--accent); font-weight:600;">Klick für Details ↗</div>
   `;
 }
 
@@ -1607,110 +1740,82 @@ function adaptPhaseDetail(detail, workoutType) {
 
 function renderSportSpecificNext(filter, containerId) {
   try {
-  console.log('[renderSportSpecificNext] filter=' + filter + ' container=' + containerId);
   const next = getNextPendingPlan(filter);
-  console.log('[renderSportSpecificNext] result:', next);
   const el = document.getElementById(containerId);
   if (!el) { console.warn('Element not found:', containerId); return; }
   if (!next) {
-    el.innerHTML = '<div style="color:#cbd5e1; padding:16px;">Keine offene Einheit dieser Sportart in den nächsten 14 Tagen.</div>';
+    el.innerHTML = '<div style="color:#cbd5e1; padding:8px; font-size:13px;">Keine offene Einheit dieser Sportart in den nächsten 14 Tagen.</div>';
     return;
   }
   const dayLabels = ['So','Mo','Di','Mi','Do','Fr','Sa'];
   const dateStr = dayLabels[next.weekday] + ' ' + next.date.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
   const ago = next.daysFromNow === 0 ? 'heute' : next.daysFromNow === 1 ? 'morgen' : 'in ' + next.daysFromNow + ' Tagen';
   const w = next.workout;
-  // Adaptive-Hint im Header anzeigen falls Anpassungen aktiv
   const state = typeof loadAdaptiveState === 'function' ? loadAdaptiveState() : null;
   const adaptiveBadge = state && state.easyPaceOffsetSec !== 0
-    ? `<span style="background:#06B6D4; color:white; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; margin-left:8px;">🧠 ADAPTIVE</span>`
+    ? `<span style="background:#06B6D4; color:white; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; margin-left:8px;">ADAPTIVE</span>`
     : '';
+  const contentId = containerId + '-detail';
   el.innerHTML = `
-    <div style="font-size:11px; text-transform:uppercase; color:#cbd5e1; letter-spacing:.5px;">${dateStr} · ${ago}${adaptiveBadge}</div>
-    <div style="font-size:22px; font-weight:700; margin:6px 0;">${w.emoji} ${w.name}</div>
-    <div style="color:#cbd5e1; font-size:13px;">Geplante Dauer: <strong>${w.dur} min</strong> (inkl. Puffer)</div>
-    <div style="margin-top:14px;">
-      <div style="font-size:11px; text-transform:uppercase; color:#cbd5e1; letter-spacing:.5px; margin-bottom:6px;">Workout-Aufbau</div>
-      ${w.phases.map(p => '<div style="background:rgba(255,255,255,0.08); border-radius:6px; padding:8px 10px; margin-bottom:6px;"><div style="display:flex; justify-content:space-between; align-items:center;"><strong>'+p.t+'</strong><span style="color:#cbd5e1; font-size:11px;">'+p.min+' min</span></div><div style="font-size:12px; color:#dcfce7; margin-top:4px; line-height:1.4;">'+adaptPhaseDetail(p.detail, w.type)+'</div></div>').join('')}
+    <div class="collapsible-trigger" onclick="toggleSportCard('${contentId}', this)">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="font-size:28px;">${w.emoji}</div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-weight:700; font-size:16px; color:white;">${w.name}${adaptiveBadge}</div>
+          <div style="font-size:11px; color:#cbd5e1;">${dateStr} · ${ago} · ${w.dur} min</div>
+        </div>
+        <div class="chev" style="color:#cbd5e1; font-size:18px; transition:transform .25s;">▾</div>
+      </div>
     </div>
-    <div style="margin-top:10px; font-size:12px; color:#fde68a;">⚠️ ${w.note}</div>
+    <div class="collapsible-content" id="${contentId}" style="margin-top:0;">
+      <div style="padding-top:14px;">
+        <div style="font-size:11px; text-transform:uppercase; color:#cbd5e1; letter-spacing:.5px; margin-bottom:6px; font-weight:600;">Workout-Aufbau</div>
+        ${w.phases.map(p => '<div style="background:rgba(255,255,255,0.08); border-radius:6px; padding:8px 10px; margin-bottom:6px;"><div style="display:flex; justify-content:space-between; align-items:center;"><strong>'+p.t+'</strong><span style="color:#cbd5e1; font-size:11px;">'+p.min+' min</span></div><div style="font-size:12px; color:#dcfce7; margin-top:4px; line-height:1.4;">'+(typeof adaptPhaseDetail==='function' ? adaptPhaseDetail(p.detail, w.type) : p.detail)+'</div></div>').join('')}
+        <div style="margin-top:10px; font-size:12px; color:#fde68a;">⚠️ ${w.note}</div>
+      </div>
+    </div>
   `;
   } catch(e) {
     const el = document.getElementById(containerId);
-    if (el) el.innerHTML = '<div style="color:#fca5a5; padding:16px; font-size:12px;">❌ Render-Fehler: ' + e.message + '<br>Stack: ' + (e.stack||'').slice(0,300) + '</div>';
+    if (el) el.innerHTML = '<div style="color:#fca5a5; padding:16px; font-size:12px;">❌ Render-Fehler: ' + e.message + '</div>';
     console.error('renderSportSpecificNext error:', e);
   }
+}
+function toggleSportCard(contentId, triggerEl) {
+  const content = document.getElementById(contentId);
+  if (!content) return;
+  const isOpen = content.classList.toggle('open');
+  const chev = triggerEl.querySelector('.chev');
+  if (chev) chev.classList.toggle('open', isOpen);
 }
 
 
 function renderNextWorkout() {
-  const now = new Date();
-  const wd = now.getDay();
-  const w = NEXT_WORKOUTS[wd];
-  const days = ['So','Mo','Di','Mi','Do','Fr','Sa'];
-  const dayStr = days[wd] + ' ' + now.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
-
-  const latest = getLatestActivity();
-  // Zeige aktuellste Einheit nur wenn sie <72h alt ist
-  const recent = latest && (now - new Date(latest.start_date)) < 72*3600*1000;
-
-  let bodyHtml = `<div style="font-size:11px; text-transform:uppercase; color:#cbd5e1; letter-spacing:.5px;">Heute · ${dayStr}</div>`;
-
-  if (recent) {
-    const actDate = new Date(latest.start_date);
-    const actWd = actDate.getDay();
-    const actPlan = NEXT_WORKOUTS[actWd];
-    const a = analyzeActivity(latest, actWd);
-    const colors = { good:'#86efac', warn:'#fbbf24', info:'#cbd5e1' };
-    const analysisHtml = a.analysis.map(x => `<li style="color:${colors[x.c]||'#cbd5e1'};">${x.t}</li>`).join('');
-    const dayLabel = days[actWd] + ' ' + actDate.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
-    const isToday = actDate.toDateString() === now.toDateString();
-    const isYesterday = (now - actDate) > 0 && (now - actDate) < 36*3600*1000;
-    const ageLabel = isToday ? 'Heute' : isYesterday ? 'Gestern' : dayLabel;
-    bodyHtml += `
-      <div style="background:#15803d; padding:14px 16px; border-radius:8px; margin-top:8px;">
-        <div style="font-size:12px; text-transform:uppercase; color:#dcfce7; letter-spacing:.5px; margin-bottom:4px;">✅ Aktuellste Einheit · ${ageLabel}</div>
-        <div style="font-size:20px; font-weight:700;">${a.type === 'Run' ? '🏃' : a.type === 'WeightTraining' ? '💪' : '🏋️'} ${a.name}</div>
-        <div style="color:#dcfce7; font-size:13px; margin-top:4px;">${a.date_str} · Strava-Typ: ${a.type}</div>
-        <div class="grid cols-4" style="margin-top:12px; gap:8px;">
-          ${a.distance_km ? `<div style="background:rgba(255,255,255,0.15); padding:8px; border-radius:6px;"><div style="font-size:10px; color:#dcfce7; text-transform:uppercase;">Distanz</div><div style="font-size:18px; font-weight:700;">${a.distance_km} km</div></div>` : ''}
-          <div style="background:rgba(255,255,255,0.15); padding:8px; border-radius:6px;"><div style="font-size:10px; color:#dcfce7; text-transform:uppercase;">Dauer</div><div style="font-size:18px; font-weight:700;">${a.duration_min} min</div></div>
-          ${a.pace_str ? `<div style="background:rgba(255,255,255,0.15); padding:8px; border-radius:6px;"><div style="font-size:10px; color:#dcfce7; text-transform:uppercase;">Pace</div><div style="font-size:18px; font-weight:700;">${a.pace_str}</div></div>` : ''}
-          ${a.avg_hf ? `<div style="background:rgba(255,255,255,0.15); padding:8px; border-radius:6px;"><div style="font-size:10px; color:#dcfce7; text-transform:uppercase;">HF avg / max</div><div style="font-size:18px; font-weight:700;">${a.avg_hf}/${a.max_hf||'—'}</div></div>` : ''}
-        </div>
-        ${analysisHtml ? `<div style="margin-top:12px;"><div style="font-size:11px; color:#dcfce7; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px;">Analyse vs. ${actPlan ? actPlan.name + ' (Plan ' + days[actWd] + ')' : 'Plan'}</div><ul style="margin:0; padding-left:20px; line-height:1.5; font-size:13px;">${analysisHtml}</ul></div>` : ''}
-      </div>
-      ${(() => {
-        const next = getNextPendingPlan();
-        if (!next) return '<div style="margin-top:12px; background:rgba(255,255,255,0.08); border-radius:6px; padding:10px;"><div style="font-size:12px; color:#86efac;">✅ Wochenplan komplett erledigt</div></div>';
-        const dayLabels = ['So','Mo','Di','Mi','Do','Fr','Sa'];
-        const nDateStr = dayLabels[next.weekday] + ' ' + next.date.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
-        const ago = next.daysFromNow === 0 ? 'heute' : next.daysFromNow === 1 ? 'morgen' : 'in ' + next.daysFromNow + ' Tagen';
-        return `<div style="margin-top:12px; background:rgba(255,255,255,0.08); border-radius:6px; padding:10px;">
-          <div style="font-size:11px; color:#cbd5e1; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px;">📍 Nächste Plan-Einheit · ${nDateStr} (${ago})</div>
-          <div style="font-size:14px; color:white;">${next.workout.emoji} ${next.workout.name} · ${next.workout.dur} min</div>
-        </div>`;
-      })()}`;
-  } else {
-    const nextPending = getNextPendingPlan();
-    const wShow = nextPending ? nextPending.workout : w;
-    const dayLabels = ['So','Mo','Di','Mi','Do','Fr','Sa'];
-    const wShowDate = nextPending ? `${dayLabels[nextPending.weekday]} ${nextPending.date.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})} (${nextPending.daysFromNow === 0 ? 'heute' : nextPending.daysFromNow === 1 ? 'morgen' : 'in '+nextPending.daysFromNow+' Tagen'})` : dayStr;
-    bodyHtml = `<div style="font-size:11px; text-transform:uppercase; color:#cbd5e1; letter-spacing:.5px;">📍 Nächste Einheit · ${wShowDate}</div>` + `
-      <div style="font-size:22px; font-weight:700; margin:6px 0;">${wShow.emoji} ${wShow.name}</div>
-      <div style="color:#cbd5e1; font-size:13px;">Geplante Dauer: <strong>${wShow.dur} min</strong> (inkl. Puffer)</div>
-      <div style="margin-top:14px;">
-        <div style="font-size:11px; text-transform:uppercase; color:#cbd5e1; letter-spacing:.5px; margin-bottom:6px;">Workout-Aufbau</div>
-        ${wShow.phases.map(p => `<div style="background:rgba(255,255,255,0.08); border-radius:6px; padding:8px 10px; margin-bottom:6px;">
-          <div style="display:flex; justify-content:space-between; align-items:center;"><strong>${p.t}</strong><span style="color:#cbd5e1; font-size:11px;">${p.min} min</span></div>
-          <div style="font-size:12px; color:#dcfce7; margin-top:4px; line-height:1.4;">${p.detail}</div>
-        </div>`).join('')}
-      </div>
-      <div style="margin-top:10px; font-size:12px; color:#fde68a;">⚠️ ${wShow.note}</div>`;
+  const target = document.getElementById('next-workout-content');
+  if (!target) return;
+  const nextPending = (typeof getNextPendingPlan === 'function') ? getNextPendingPlan(null) : null;
+  if (!nextPending) {
+    target.innerHTML = '<div style="color:#7DD3FC;">Wochenplan komplett erledigt ✅</div>';
+    return;
   }
-
-  document.getElementById('next-workout-content').innerHTML = bodyHtml + '<div id="week-progress-block"></div>';
-  renderWeekProgress();
+  const days = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+  const w = nextPending.workout;
+  const dStr = days[nextPending.weekday] + ' ' + nextPending.date.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+  const ago = nextPending.daysFromNow === 0 ? 'heute' : nextPending.daysFromNow === 1 ? 'morgen' : `in ${nextPending.daysFromNow} Tagen`;
+  const state = typeof loadAdaptiveState === 'function' ? loadAdaptiveState() : null;
+  const adaptiveBadge = state && state.easyPaceOffsetSec !== 0
+    ? `<span style="background:#06B6D4; color:white; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; margin-left:8px;">ADAPTIVE</span>`
+    : '';
+  target.innerHTML = `
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px;">
+      <div style="font-size:30px;">${w.emoji}</div>
+      <div style="flex:1; min-width:0;">
+        <div style="font-weight:700; font-size:16px; color:white;">${w.name}${adaptiveBadge}</div>
+        <div style="font-size:11px; color:#7DD3FC;">${dStr} · ${ago} · ${w.dur} min</div>
+      </div>
+    </div>
+    <div style="margin-top:10px; font-size:11px; color:#7DD3FC; font-weight:600;">Klick für Workout-Details, Phasen-Aufbau & Hinweise ↗</div>
+  `;
 }
 renderLTHR();
     renderNextWorkout();
@@ -1792,7 +1897,7 @@ setTimeout(() => { renderNextWorkout(); setInterval(renderNextWorkout, 24*60*60*
   </div>
 </div>
 
-<div class="grid cols-2" data-view="both,run" style="margin-bottom:12px;">
+<div class="grid cols-2" style="margin-bottom:12px;">
   <div class="card">
     <h3>HF bei Easy-Läufen (Cardio-Fitness-Proxy)</h3>
     <div class="muted" style="font-size:11px; margin-bottom:6px;">Sinkende HF bei gleicher Pace = Aerobic-Fitness verbessert sich.</div>
@@ -2070,6 +2175,13 @@ async function stravaPull() {
     if (msg) msg.innerHTML = '<div class="alert info">⚙️ Worker noch nicht konfiguriert. Öffne den Setup-Wizard rechts unten.</div>';
     return;
   }
+  // Loading-State Button
+  const btn = document.getElementById('strava-sync-btn');
+  const btnIcon = document.getElementById('strava-sync-btn-icon');
+  const btnText = document.getElementById('strava-sync-btn-text');
+  if (btn) btn.disabled = true;
+  if (btnIcon) { btnIcon.className = 'spinning'; btnIcon.textContent = '⟳'; }
+  if (btnText) btnText.textContent = 'Sync läuft…';
   document.getElementById('strava-msg').innerHTML = '<div class="alert info">⏳ Lade Strava-Daten…</div>';
   try {
     const [athlete, stats, acts] = await Promise.all([workerGet('/athlete'), workerGet('/stats'), workerGet(`/activities?after=${Math.floor((Date.now()-180*24*3600*1000)/1000)}&per_page=200`)]);
@@ -2102,14 +2214,26 @@ async function stravaPull() {
       renderSportSpecificNext('run', 'next-run-content');
       renderSportSpecificNext('strength', 'next-strength-content');
     }
+    if (typeof renderWeekPlan === 'function') renderWeekPlan();  // Auto-Abhaken nach Sync
     if (typeof renderTrends === 'function') renderTrends(acts);
     if (typeof runAdaptiveAnalysis === 'function') runAdaptiveAnalysis(acts);
     if (typeof renderAdaptationBanner === 'function') renderAdaptationBanner();
     if (typeof maybeTriggerRPE === 'function') maybeTriggerRPE(acts);
     document.getElementById('strava-msg').innerHTML = `<div class="alert success">✅ ${acts.length} Aktivitäten · Charts live aktualisiert</div>`;
-    setTimeout(()=>{document.getElementById('strava-msg').innerHTML='';}, 2500);
+    if (btnIcon) { btnIcon.className = ''; btnIcon.textContent = '✓'; }
+    if (btnText) btnText.textContent = 'Geladen';
+    setTimeout(()=>{
+      document.getElementById('strava-msg').innerHTML='';
+      if (btn) btn.disabled = false;
+      if (btnIcon) btnIcon.textContent = '🔄';
+      if (btnText) btnText.textContent = 'Strava-Sync';
+    }, 2500);
   } catch(e) {
     document.getElementById('strava-msg').innerHTML = `<div class="alert warn">❌ ${e.message}</div>`;
+    if (btn) btn.disabled = false;
+    if (btnIcon) { btnIcon.className = ''; btnIcon.textContent = '⚠️'; }
+    if (btnText) btnText.textContent = 'Fehler — Retry';
+    setTimeout(() => { if (btnIcon) btnIcon.textContent = '🔄'; if (btnText) btnText.textContent = 'Strava-Sync'; }, 4000);
   }
 }
 renderStrengthChart();
@@ -2235,16 +2359,16 @@ function updateChartsFromStrava(activities) {
 
 /* ============ PHASE 2: TRENDS & FORM-SCORE ============ */
 
-// Filter helper: nur Easy/Aerobic Läufe (lange genug, moderate Pace, in Z2-Range)
+// Filter helper: Aerobic/Easy/Long Läufe (jetzt locker, damit Trends auch ohne Z2-Disziplin Daten haben)
 function filterEasyRuns(activities, maxDays) {
   const cutoff = Date.now() - (maxDays || 180) * 24 * 3600 * 1000;
   return activities.filter(a =>
     a.type === 'Run' &&
     a.average_heartrate &&
-    a.distance > 3000 &&             // mind. 3 km
-    a.moving_time > 20*60 &&         // mind. 20 min
-    a.average_speed > 2.5 &&          // schneller als 6:40/km
-    a.average_speed < 3.7 &&          // langsamer als 4:30/km (sonst Tempo)
+    a.distance > 2000 &&             // mind. 2 km (vorher 3)
+    a.moving_time > 15*60 &&         // mind. 15 min (vorher 20)
+    a.average_speed > 2.0 &&          // schneller als 8:20/km (vorher 6:40)
+    a.average_speed < 4.5 &&          // langsamer als 3:42/km (vorher 4:30)
     new Date(a.start_date).getTime() > cutoff
   );
 }
