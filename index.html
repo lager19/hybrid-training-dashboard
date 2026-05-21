@@ -2589,35 +2589,38 @@ function renderTrends(activities) {
 
 /* ============ PHASE 3: ADAPTIVE PLAN-ANPASSUNG MIT SMOOTHING ============ */
 
-const ADAPT_KEY = 'adaptiveState';
-const ADAPT_DEFAULTS = {
-  easyPaceOffsetSec: 0,        // + = langsamer, - = schneller
-  intervalPaceOffsetSec: 0,
-  weeklyKmCapPct: null,        // null = kein Cap, sonst max % vs Vorwoche
-  history: [],                 // Liste von {ts, trigger, action, detail, undone}
-  lastTriggerTs: 0,             // Zeitstempel des letzten Triggers (Throttle: max 1 pro 12h)
-};
+// Defaults sind inline in loadAdaptiveState (vermeidet TDZ-Fehler bei Cross-Script-Calls).
+function _adaptDefaults() {
+  return {
+    easyPaceOffsetSec: 0,        // + = langsamer, - = schneller
+    intervalPaceOffsetSec: 0,
+    weeklyKmCapPct: null,        // null = kein Cap, sonst max % vs Vorwoche
+    history: [],                 // Liste von {ts, trigger, action, detail, undone}
+    lastTriggerTs: 0,             // Zeitstempel des letzten Triggers (Throttle: max 1 pro 12h)
+  };
+}
 
 function loadAdaptiveState() {
   try {
-    const s = JSON.parse(localStorage.getItem(ADAPT_KEY) || 'null');
-    if (!s) return Object.assign({}, ADAPT_DEFAULTS);
-    return Object.assign({}, ADAPT_DEFAULTS, s);
-  } catch { return Object.assign({}, ADAPT_DEFAULTS); }
+    const s = JSON.parse(localStorage.getItem('adaptiveState') || 'null');
+    if (!s) return _adaptDefaults();
+    return Object.assign(_adaptDefaults(), s);
+  } catch { return _adaptDefaults(); }
 }
 function saveAdaptiveState(state) {
-  try { localStorage.setItem(ADAPT_KEY, JSON.stringify(state)); } catch(e) { console.warn('Adaptive save failed', e); }
+  try { localStorage.setItem('adaptiveState', JSON.stringify(state)); } catch(e) { console.warn('Adaptive save failed', e); }
 }
 function resetAdaptive(key) {
   const s = loadAdaptiveState();
+  const defaults = _adaptDefaults();
   if (key === 'all') {
-    saveAdaptiveState(Object.assign({}, ADAPT_DEFAULTS));
+    saveAdaptiveState(_adaptDefaults());
   } else if (key in s) {
-    s[key] = ADAPT_DEFAULTS[key];
+    s[key] = defaults[key];
     s.history.push({ ts: Date.now(), trigger: 'manual', action: 'reset', detail: key + ' zurückgesetzt', undone: false });
     saveAdaptiveState(s);
   }
-  renderAdaptationBanner();
+  if (typeof renderAdaptationBanner === 'function') renderAdaptationBanner();
   if (typeof renderSportSpecificNext === 'function') {
     renderSportSpecificNext('run', 'next-run-content');
     renderSportSpecificNext('strength', 'next-strength-content');
