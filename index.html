@@ -426,6 +426,9 @@ hr { border:none; border-top:1px solid var(--border); margin:20px 0; }
         <input type="number" id="set-smoothing-window" min="1" max="5" style="max-width:80px;">
       </div>
 
+      <h3 style="margin-top:18px;">🧠 Adaptive Anpassungen</h3>
+      <div id="adapt-history-content" style="font-size:12px;"></div>
+
       <h3 style="margin-top:18px; color:var(--danger);">Daten</h3>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="ghost" onclick="exportUserData()">📤 Daten exportieren</button>
@@ -463,6 +466,26 @@ function openSettings() {
   const settings = cfg.settings || {};
   document.getElementById('set-rpe-after-sync').checked = settings.rpeAfterSync !== false;
   document.getElementById('set-smoothing-window').value = settings.smoothingWindow || 3;
+  // Adaption-History rendern
+  const adaptHist = document.getElementById('adapt-history-content');
+  if (adaptHist && typeof loadAdaptiveState === 'function') {
+    const state = loadAdaptiveState();
+    const offsets = [];
+    if (state.easyPaceOffsetSec !== 0) offsets.push(`<strong>Easy-Pace-Offset:</strong> ${state.easyPaceOffsetSec > 0 ? '+' : ''}${state.easyPaceOffsetSec}s/km <button onclick="resetAdaptive('easyPaceOffsetSec')" style="margin-left:8px; padding:2px 8px; font-size:10px; background:transparent; border:1px solid var(--border); border-radius:4px; cursor:pointer;">Zurücksetzen</button>`);
+    if (state.weeklyKmCapPct != null) offsets.push(`<strong>Volumen-Cap:</strong> +${state.weeklyKmCapPct}% <button onclick="resetAdaptive('weeklyKmCapPct')" style="margin-left:8px; padding:2px 8px; font-size:10px; background:transparent; border:1px solid var(--border); border-radius:4px; cursor:pointer;">Zurücksetzen</button>`);
+    const histRows = (state.history || []).slice(0, 5).map(h => {
+      const d = new Date(h.ts);
+      const dStr = d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}) + ' ' + d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+      const undoMark = h.undone ? ' <span style="color:var(--muted);">(rückgängig gemacht)</span>' : '';
+      const triggerColor = h.trigger === 'A' ? '#06B6D4' : h.trigger === 'B' ? '#10B981' : h.trigger === 'C' ? '#F59E0B' : h.trigger === 'D' ? '#EF4444' : 'var(--muted)';
+      return `<div style="padding:6px 8px; border-left:3px solid ${triggerColor}; background:var(--bg); margin-bottom:4px; border-radius:0 4px 4px 0;"><div style="font-weight:600; font-size:11px; color:${triggerColor};">${dStr} · Trigger ${h.trigger}${undoMark}</div><div style="font-size:11px; color:var(--muted); margin-top:2px;">${h.detail}</div></div>`;
+    }).join('');
+    adaptHist.innerHTML = `
+      ${offsets.length ? '<div style="background:#eff6ff; border:1px solid #bfdbfe; padding:8px 10px; border-radius:6px; margin-bottom:8px;">' + offsets.join('<br>') + '</div>' : '<div class="muted" style="margin-bottom:8px;">Keine aktiven Anpassungen.</div>'}
+      ${histRows ? '<div style="font-weight:600; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin:8px 0 4px;">Letzte Anpassungen</div>' + histRows : '<div class="muted" style="font-size:11px;">Noch keine Anpassungs-History.</div>'}
+      ${state.history.length > 0 ? '<button onclick="if(confirm(\'Alle Adaptive-Anpassungen zurücksetzen?\')) resetAdaptive(\'all\')" style="margin-top:8px; padding:6px 12px; font-size:11px; background:transparent; border:1px solid var(--danger); color:var(--danger); border-radius:4px; cursor:pointer;">🔄 Alle Anpassungen zurücksetzen</button>' : ''}
+    `;
+  }
   document.getElementById('settings-overlay').classList.remove('hidden');
 }
 function closeSettings() {
@@ -884,6 +907,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('wiz-reopen-btn').style.display = 'block';
     applyUserConfig(cfg);
     applySportsVisibility(cfg.sports || ['run','strength','mobility']);
+    if (typeof renderAdaptationBanner === 'function') renderAdaptationBanner();
     // Falls Race-Datum fehlt: kleine Banner-Hinweis
     if (!cfg.race || !cfg.race.date) {
       const msg = document.getElementById('strava-msg');
@@ -918,6 +942,8 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 
+
+<div id="adapt-status"></div>
 
 <div class="card" id="tabs-container" style="padding:6px; margin-bottom:12px;">
   <div style="display:flex; gap:4px; background:#f1f5f9; padding:4px; border-radius:6px;" id="tabs-row">
@@ -1567,6 +1593,18 @@ function getNextPendingPlan(filter) {
 
 
 
+// Workout-Phase-Detail mit Adaptive-Pace-Offsets anreichern
+function adaptPhaseDetail(detail, workoutType) {
+  if (typeof loadAdaptiveState !== 'function') return detail;
+  const state = loadAdaptiveState();
+  if (workoutType !== 'run' || !state.easyPaceOffsetSec) return detail;
+  const sign = state.easyPaceOffsetSec > 0 ? '+' : '−';
+  const offsetStr = ` <span style="color:#7DD3FC; font-weight:600;">(Pace ${sign}${Math.abs(state.easyPaceOffsetSec)}s adaptiv)</span>`;
+  // Nur bei Easy/Z2-Phasen das Offset-Tag anhängen
+  if (/Easy|Z2|Z1/i.test(detail)) return detail + offsetStr;
+  return detail;
+}
+
 function renderSportSpecificNext(filter, containerId) {
   try {
   console.log('[renderSportSpecificNext] filter=' + filter + ' container=' + containerId);
@@ -1582,13 +1620,18 @@ function renderSportSpecificNext(filter, containerId) {
   const dateStr = dayLabels[next.weekday] + ' ' + next.date.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
   const ago = next.daysFromNow === 0 ? 'heute' : next.daysFromNow === 1 ? 'morgen' : 'in ' + next.daysFromNow + ' Tagen';
   const w = next.workout;
+  // Adaptive-Hint im Header anzeigen falls Anpassungen aktiv
+  const state = typeof loadAdaptiveState === 'function' ? loadAdaptiveState() : null;
+  const adaptiveBadge = state && state.easyPaceOffsetSec !== 0
+    ? `<span style="background:#06B6D4; color:white; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; margin-left:8px;">🧠 ADAPTIVE</span>`
+    : '';
   el.innerHTML = `
-    <div style="font-size:11px; text-transform:uppercase; color:#cbd5e1; letter-spacing:.5px;">${dateStr} · ${ago}</div>
+    <div style="font-size:11px; text-transform:uppercase; color:#cbd5e1; letter-spacing:.5px;">${dateStr} · ${ago}${adaptiveBadge}</div>
     <div style="font-size:22px; font-weight:700; margin:6px 0;">${w.emoji} ${w.name}</div>
     <div style="color:#cbd5e1; font-size:13px;">Geplante Dauer: <strong>${w.dur} min</strong> (inkl. Puffer)</div>
     <div style="margin-top:14px;">
       <div style="font-size:11px; text-transform:uppercase; color:#cbd5e1; letter-spacing:.5px; margin-bottom:6px;">Workout-Aufbau</div>
-      ${w.phases.map(p => '<div style="background:rgba(255,255,255,0.08); border-radius:6px; padding:8px 10px; margin-bottom:6px;"><div style="display:flex; justify-content:space-between; align-items:center;"><strong>'+p.t+'</strong><span style="color:#cbd5e1; font-size:11px;">'+p.min+' min</span></div><div style="font-size:12px; color:#dcfce7; margin-top:4px; line-height:1.4;">'+p.detail+'</div></div>').join('')}
+      ${w.phases.map(p => '<div style="background:rgba(255,255,255,0.08); border-radius:6px; padding:8px 10px; margin-bottom:6px;"><div style="display:flex; justify-content:space-between; align-items:center;"><strong>'+p.t+'</strong><span style="color:#cbd5e1; font-size:11px;">'+p.min+' min</span></div><div style="font-size:12px; color:#dcfce7; margin-top:4px; line-height:1.4;">'+adaptPhaseDetail(p.detail, w.type)+'</div></div>').join('')}
     </div>
     <div style="margin-top:10px; font-size:12px; color:#fde68a;">⚠️ ${w.note}</div>
   `;
@@ -2060,6 +2103,8 @@ async function stravaPull() {
       renderSportSpecificNext('strength', 'next-strength-content');
     }
     if (typeof renderTrends === 'function') renderTrends(acts);
+    if (typeof runAdaptiveAnalysis === 'function') runAdaptiveAnalysis(acts);
+    if (typeof renderAdaptationBanner === 'function') renderAdaptationBanner();
     if (typeof maybeTriggerRPE === 'function') maybeTriggerRPE(acts);
     document.getElementById('strava-msg').innerHTML = `<div class="alert success">✅ ${acts.length} Aktivitäten · Charts live aktualisiert</div>`;
     setTimeout(()=>{document.getElementById('strava-msg').innerHTML='';}, 2500);
@@ -2540,6 +2585,235 @@ function renderTrends(activities) {
   } catch (e) {
     console.warn('renderTrends failed:', e);
   }
+}
+
+/* ============ PHASE 3: ADAPTIVE PLAN-ANPASSUNG MIT SMOOTHING ============ */
+
+const ADAPT_KEY = 'adaptiveState';
+const ADAPT_DEFAULTS = {
+  easyPaceOffsetSec: 0,        // + = langsamer, - = schneller
+  intervalPaceOffsetSec: 0,
+  weeklyKmCapPct: null,        // null = kein Cap, sonst max % vs Vorwoche
+  history: [],                 // Liste von {ts, trigger, action, detail, undone}
+  lastTriggerTs: 0,             // Zeitstempel des letzten Triggers (Throttle: max 1 pro 12h)
+};
+
+function loadAdaptiveState() {
+  try {
+    const s = JSON.parse(localStorage.getItem(ADAPT_KEY) || 'null');
+    if (!s) return Object.assign({}, ADAPT_DEFAULTS);
+    return Object.assign({}, ADAPT_DEFAULTS, s);
+  } catch { return Object.assign({}, ADAPT_DEFAULTS); }
+}
+function saveAdaptiveState(state) {
+  try { localStorage.setItem(ADAPT_KEY, JSON.stringify(state)); } catch(e) { console.warn('Adaptive save failed', e); }
+}
+function resetAdaptive(key) {
+  const s = loadAdaptiveState();
+  if (key === 'all') {
+    saveAdaptiveState(Object.assign({}, ADAPT_DEFAULTS));
+  } else if (key in s) {
+    s[key] = ADAPT_DEFAULTS[key];
+    s.history.push({ ts: Date.now(), trigger: 'manual', action: 'reset', detail: key + ' zurückgesetzt', undone: false });
+    saveAdaptiveState(s);
+  }
+  renderAdaptationBanner();
+  if (typeof renderSportSpecificNext === 'function') {
+    renderSportSpecificNext('run', 'next-run-content');
+    renderSportSpecificNext('strength', 'next-strength-content');
+  }
+  if (typeof renderNextWorkout === 'function') renderNextWorkout();
+}
+
+// Smoothing-Analyzer: erkennt 2-3 konsekutive Easy-Läufe gleicher Tendenz
+function runAdaptiveAnalysis(activities) {
+  if (!activities || !activities.length) return;
+  const cfg = window.USER_CONFIG || {};
+  const lthr = (cfg.physio && cfg.physio.lthr) || window.currentLTHR || 170;
+  const z2Cap = Math.round(lthr * 0.89);
+  const z2Mid = Math.round(lthr * 0.85);
+
+  const state = loadAdaptiveState();
+  // Throttle: max 1 Anpassung pro 12h (sonst zu reaktiv)
+  if (state.lastTriggerTs && (Date.now() - state.lastTriggerTs) < 12*3600*1000) {
+    console.log('[Adaptive] throttled (last trigger', Math.round((Date.now()-state.lastTriggerTs)/3600000), 'h ago)');
+    return;
+  }
+  const smoothingWindow = (cfg.settings && cfg.settings.smoothingWindow) || 3;
+
+  // Filtere Easy-Runs der letzten 30 Tage, sortiert chronologisch
+  const easy = filterEasyRuns(activities, 30).sort((a,b)=>new Date(a.start_date)-new Date(b.start_date));
+  if (easy.length < smoothingWindow) {
+    console.log('[Adaptive] zu wenig Easy-Runs:', easy.length);
+    return;
+  }
+  const lastN = easy.slice(-smoothingWindow);
+  const prevN = easy.slice(-2*smoothingWindow, -smoothingWindow);
+
+  // === TRIGGER A: Easy-Pace zu schnell (HF konstant >Z2-Cap) ===
+  const allOverCap = lastN.every(a => a.average_heartrate > z2Cap);
+  if (allOverCap && state.easyPaceOffsetSec < 60) {  // Max 60s Total-Offset
+    const meanHF = Math.round(lastN.reduce((s,a)=>s+a.average_heartrate,0)/lastN.length);
+    state.easyPaceOffsetSec += 10;
+    state.lastTriggerTs = Date.now();
+    state.history.unshift({
+      ts: Date.now(), trigger: 'A',
+      action: 'easy_pace_slower_10s',
+      detail: `${smoothingWindow} aufeinanderfolgende Easy-Läufe HF=${meanHF} bpm > Z2-Cap ${z2Cap}. Easy-Pace +10s/km langsamer (Total-Offset: +${state.easyPaceOffsetSec}s).`,
+      undone: false,
+    });
+    saveAdaptiveState(state);
+    showAdaptationBanner(state.history[0]);
+    console.log('[Adaptive] Trigger A:', state.history[0]);
+    return;
+  }
+
+  // === TRIGGER B: Easy-Pace zu locker (HF konstant unter Mid-Z2 UND RPE niedrig) ===
+  if (easy.length >= 2*smoothingWindow) {
+    const allLowHF = lastN.every(a => a.average_heartrate < z2Mid);
+    const rpes = lastN.map(a => parseInt(localStorage.getItem('rpe_'+a.id), 10)).filter(r => isFinite(r));
+    const rpeMedian = rpes.length ? rpes.sort((a,b)=>a-b)[Math.floor(rpes.length/2)] : null;
+    if (allLowHF && rpeMedian != null && rpeMedian <= 3 && state.easyPaceOffsetSec > -30) {
+      const meanHF = Math.round(lastN.reduce((s,a)=>s+a.average_heartrate,0)/lastN.length);
+      state.easyPaceOffsetSec -= 5;
+      state.lastTriggerTs = Date.now();
+      state.history.unshift({
+        ts: Date.now(), trigger: 'B',
+        action: 'easy_pace_faster_5s',
+        detail: `${smoothingWindow} Easy-Läufe HF=${meanHF} < Mid-Z2 ${z2Mid} und RPE-Median ${rpeMedian} ≤3. Easy-Pace -5s/km schneller (Total-Offset: ${state.easyPaceOffsetSec}s).`,
+        undone: false,
+      });
+      saveAdaptiveState(state);
+      showAdaptationBanner(state.history[0]);
+      console.log('[Adaptive] Trigger B:', state.history[0]);
+      return;
+    }
+  }
+
+  // === TRIGGER C: Übermüdung (RPE-Median ≥8 über letzte 5 Activities) ===
+  const recent5 = activities.slice(0, 5);  // sortiert desc by date durch stravaPull
+  const recentRPEs = recent5.map(a => parseInt(localStorage.getItem('rpe_'+a.id),10)).filter(r => isFinite(r));
+  if (recentRPEs.length >= 3) {
+    const median = recentRPEs.sort((a,b)=>a-b)[Math.floor(recentRPEs.length/2)];
+    if (median >= 8) {
+      // Nur als Empfehlung — kein Auto-Override
+      const existing = state.history.find(h => h.trigger === 'C' && (Date.now() - h.ts) < 48*3600*1000);
+      if (!existing) {
+        state.lastTriggerTs = Date.now();
+        state.history.unshift({
+          ts: Date.now(), trigger: 'C',
+          action: 'recommend_easy',
+          detail: `RPE-Median ${median} über letzte ${recentRPEs.length} Einheiten ≥8 (Übermüdung-Signal). Empfehlung: nächste harte Einheit zu Easy umwandeln, mehr Schlaf priorisieren.`,
+          undone: false,
+        });
+        saveAdaptiveState(state);
+        showAdaptationBanner(state.history[0]);
+        console.log('[Adaptive] Trigger C:', state.history[0]);
+        return;
+      }
+    }
+  }
+
+  // === TRIGGER D: Volumen-Cap (Ramp >25% zwei Wochen in Folge) ===
+  const ramp = computeRampRate(activities);
+  if (ramp.rampWoW != null && ramp.rampWoW > 25 && ramp.rampVs4 != null && ramp.rampVs4 > 20) {
+    const existingD = state.history.find(h => h.trigger === 'D' && (Date.now() - h.ts) < 7*24*3600*1000);
+    if (!existingD) {
+      state.weeklyKmCapPct = 10;  // +10% vs Vorwoche cappen
+      state.lastTriggerTs = Date.now();
+      state.history.unshift({
+        ts: Date.now(), trigger: 'D',
+        action: 'weekly_km_cap_10pct',
+        detail: `Volumen-Ramp ${ramp.rampWoW.toFixed(0)}% WoW + ${ramp.rampVs4.toFixed(0)}% vs 4-Wo-Schnitt. Folge-Wo km-Cap +10% aktiviert (Verletzungsschutz).`,
+        undone: false,
+      });
+      saveAdaptiveState(state);
+      showAdaptationBanner(state.history[0]);
+      return;
+    }
+  }
+}
+
+// Banner-Notification bei neuer Anpassung
+function showAdaptationBanner(entry) {
+  let banner = document.getElementById('adapt-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'adapt-banner';
+    banner.style.cssText = 'position:fixed; top:16px; right:16px; max-width:380px; background:linear-gradient(135deg,#0A2540 0%,#1E3A5F 100%); color:white; padding:14px 18px; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.25); z-index:1000; cursor:default; border-left:4px solid #06B6D4;';
+    document.body.appendChild(banner);
+  }
+  const triggerLabels = { A: '🐢 Easy-Pace langsamer', B: '⚡ Easy-Pace schneller', C: '⚠️ Übermüdung erkannt', D: '🛡️ Volumen-Cap aktiv' };
+  banner.innerHTML = `
+    <div style="font-weight:700; font-size:13px; color:#7DD3FC; text-transform:uppercase; letter-spacing:.5px;">🧠 Adaptive Anpassung</div>
+    <div style="font-weight:700; font-size:15px; margin:6px 0;">${triggerLabels[entry.trigger] || entry.action}</div>
+    <div style="font-size:12px; line-height:1.45; color:#CFE3F5;">${entry.detail}</div>
+    <div style="display:flex; gap:8px; margin-top:10px;">
+      <button onclick="undoLastAdaptation()" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3); color:white; padding:5px 10px; border-radius:4px; font-size:11px; cursor:pointer;">↶ Rückgängig</button>
+      <button onclick="dismissAdaptBanner()" style="background:#06B6D4; border:none; color:white; padding:5px 10px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:600;">Verstanden</button>
+    </div>
+  `;
+  banner.style.display = 'block';
+  // Auto-dismiss nach 30 Sek
+  clearTimeout(window._adaptBannerTimer);
+  window._adaptBannerTimer = setTimeout(dismissAdaptBanner, 30000);
+}
+function dismissAdaptBanner() {
+  const b = document.getElementById('adapt-banner');
+  if (b) b.style.display = 'none';
+}
+function undoLastAdaptation() {
+  const state = loadAdaptiveState();
+  if (!state.history.length) return dismissAdaptBanner();
+  const last = state.history[0];
+  if (last.undone) return dismissAdaptBanner();
+  // Revert
+  if (last.action === 'easy_pace_slower_10s') state.easyPaceOffsetSec -= 10;
+  else if (last.action === 'easy_pace_faster_5s') state.easyPaceOffsetSec += 5;
+  else if (last.action === 'weekly_km_cap_10pct') state.weeklyKmCapPct = null;
+  // Trigger C ist nur Empfehlung — undo entfernt Banner
+  last.undone = true;
+  last.undoTs = Date.now();
+  saveAdaptiveState(state);
+  dismissAdaptBanner();
+  if (typeof renderSportSpecificNext === 'function') {
+    renderSportSpecificNext('run', 'next-run-content');
+    renderSportSpecificNext('strength', 'next-strength-content');
+  }
+  if (typeof renderNextWorkout === 'function') renderNextWorkout();
+}
+
+// Banner für aktive Anpassungen (persistent oben im Dashboard)
+function renderAdaptationBanner() {
+  const state = loadAdaptiveState();
+  const container = document.getElementById('adapt-status');
+  if (!container) return;
+  const activeOffsets = [];
+  if (state.easyPaceOffsetSec !== 0) activeOffsets.push(`Easy-Pace ${state.easyPaceOffsetSec > 0 ? '+' : ''}${state.easyPaceOffsetSec}s/km`);
+  if (state.weeklyKmCapPct != null) activeOffsets.push(`Wo-km-Cap +${state.weeklyKmCapPct}%`);
+  if (activeOffsets.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+  container.innerHTML = `
+    <div style="background:linear-gradient(90deg, rgba(6,182,212,0.12) 0%, rgba(125,211,252,0.08) 100%); border:1px solid #06B6D4; border-radius:6px; padding:8px 12px; font-size:12px; display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+      <span style="font-size:16px;">🧠</span>
+      <span style="color:var(--text);"><strong>Adaptive Anpassungen aktiv:</strong> ${activeOffsets.join(' · ')}</span>
+      <span style="flex:1;"></span>
+      <button onclick="openSettings()" style="background:transparent; border:1px solid var(--primary); color:var(--primary); padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer;">Details</button>
+    </div>
+  `;
+}
+
+// Pace mit Offset formatieren (für Anzeige in Workouts)
+function formatAdaptedPace(basePaceStr) {
+  const state = loadAdaptiveState();
+  if (!state.easyPaceOffsetSec) return basePaceStr;
+  // basePaceStr wie "5:30-6:00" oder "5:30/km"
+  const offset = state.easyPaceOffsetSec;
+  const sign = offset > 0 ? '+' : '−';
+  const offsetStr = ` (${sign}${Math.abs(offset)}s adaptiv)`;
+  return basePaceStr + offsetStr;
 }
 
 setInterval(stravaPull, 5*60*1000);
