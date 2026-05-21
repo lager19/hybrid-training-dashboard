@@ -1713,6 +1713,59 @@ setTimeout(() => { renderNextWorkout(); setInterval(renderNextWorkout, 24*60*60*
 </script>
 
 
+<!-- ============ PHASE 2: TRENDS & PERFORMANCE ============ -->
+<div data-view="both" id="trends-section">
+<h2>📈 Trends & Form-Score</h2>
+<div class="grid cols-4" style="margin-bottom:12px;">
+  <div class="card kpi" id="form-score-card" style="background:linear-gradient(135deg,#0A2540 0%,#1E3A5F 100%); color:white; border:none;">
+    <div class="label" style="color:#7DD3FC;">Form-Score</div>
+    <div class="value" id="kpi-form-score" style="color:white;">—</div>
+    <div class="delta" id="kpi-form-trend" style="color:#7DD3FC;">—</div>
+  </div>
+  <div class="card kpi">
+    <div class="label">HF-Trend (Easy)</div>
+    <div class="value" id="kpi-hf-trend">—</div>
+    <div class="delta" id="kpi-hf-trend-meta">letzte 4 vs vorherige 4 Wo</div>
+  </div>
+  <div class="card kpi">
+    <div class="label">Pace-Trend (Easy)</div>
+    <div class="value" id="kpi-pace-trend">—</div>
+    <div class="delta" id="kpi-pace-trend-meta">letzte 4 vs vorherige 4 Wo</div>
+  </div>
+  <div class="card kpi" id="ramp-rate-card">
+    <div class="label">Volumen-Ramp</div>
+    <div class="value" id="kpi-ramp-rate">—</div>
+    <div class="delta" id="kpi-ramp-meta">Wo-vs-Vorwoche</div>
+  </div>
+</div>
+
+<div class="grid cols-2" style="margin-bottom:12px;">
+  <div class="card">
+    <h3>HF bei Easy-Läufen (Cardio-Fitness-Proxy)</h3>
+    <div class="muted" style="font-size:11px; margin-bottom:6px;">Sinkende HF bei gleicher Pace = Aerobic-Fitness verbessert sich.</div>
+    <div class="chartwrap"><canvas id="chartHFTrend"></canvas></div>
+  </div>
+  <div class="card">
+    <h3>Pace bei Easy-Läufen (min/km)</h3>
+    <div class="muted" style="font-size:11px; margin-bottom:6px;">Schnellere Pace bei gleicher HF = Form-Aufbau läuft.</div>
+    <div class="chartwrap"><canvas id="chartPaceTrend"></canvas></div>
+  </div>
+</div>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h3>RPE-Trend (subjektive Belastung)</h3>
+    <div class="muted" style="font-size:11px; margin-bottom:6px;">Median-RPE pro Woche. Konstant hoch = Übermüdung möglich.</div>
+    <div class="chartwrap"><canvas id="chartRPETrend"></canvas></div>
+  </div>
+  <div class="card">
+    <h3>RPE vs HF — Korrelation</h3>
+    <div class="muted" style="font-size:11px; margin-bottom:6px;">Wenn weit gestreut: Tagesform schwankt stark.</div>
+    <div class="chartwrap"><canvas id="chartRPEvsHF"></canvas></div>
+  </div>
+</div>
+</div>
+
 <div data-view="both">
 <h2>🎯 Ziele</h2>
 <div class="grid cols-3">
@@ -1991,6 +2044,7 @@ async function stravaPull() {
     updateChartsFromStrava(acts);
     if (typeof renderNextWorkout === 'function') renderNextWorkout();
     if (typeof renderLastActivity === 'function') renderLastActivity();
+    if (typeof renderTrends === 'function') renderTrends(acts);
     if (typeof maybeTriggerRPE === 'function') maybeTriggerRPE(acts);
     document.getElementById('strava-msg').innerHTML = `<div class="alert success">✅ ${acts.length} Aktivitäten · Charts live aktualisiert</div>`;
     setTimeout(()=>{document.getElementById('strava-msg').innerHTML='';}, 2500);
@@ -2118,6 +2172,334 @@ function updateChartsFromStrava(activities) {
   console.log('Live-Charts aktualisiert:', weeks.length, 'Wochen,', runs.length, 'Runs in 180 Tagen');
 }
 
+
+/* ============ PHASE 2: TRENDS & FORM-SCORE ============ */
+
+// Filter helper: nur Easy/Aerobic Läufe (lange genug, moderate Pace, in Z2-Range)
+function filterEasyRuns(activities, maxDays) {
+  const cutoff = Date.now() - (maxDays || 180) * 24 * 3600 * 1000;
+  return activities.filter(a =>
+    a.type === 'Run' &&
+    a.average_heartrate &&
+    a.distance > 3000 &&             // mind. 3 km
+    a.moving_time > 20*60 &&         // mind. 20 min
+    a.average_speed > 2.5 &&          // schneller als 6:40/km
+    a.average_speed < 3.7 &&          // langsamer als 4:30/km (sonst Tempo)
+    new Date(a.start_date).getTime() > cutoff
+  );
+}
+
+// Lineare Regression auf (x,y)-Paaren — gibt slope + intercept zurück
+function linearRegression(points) {
+  if (points.length < 2) return { slope: 0, intercept: points[0]?.y || 0 };
+  const n = points.length;
+  const sumX = points.reduce((s,p)=>s+p.x, 0);
+  const sumY = points.reduce((s,p)=>s+p.y, 0);
+  const sumXY = points.reduce((s,p)=>s+p.x*p.y, 0);
+  const sumXX = points.reduce((s,p)=>s+p.x*p.x, 0);
+  const slope = (n*sumXY - sumX*sumY) / Math.max(1e-9, n*sumXX - sumX*sumX);
+  const intercept = (sumY - slope*sumX) / n;
+  return { slope, intercept };
+}
+
+// Moving Average
+function movingAvg(values, window) {
+  const out = [];
+  for (let i = 0; i < values.length; i++) {
+    const start = Math.max(0, i - window + 1);
+    const slice = values.slice(start, i+1).filter(v => v != null);
+    out.push(slice.length ? slice.reduce((s,v)=>s+v,0)/slice.length : null);
+  }
+  return out;
+}
+
+// HF-Trend Chart
+function renderHFTrendChart(activities) {
+  const ctx = document.getElementById('chartHFTrend');
+  if (!ctx) return;
+  const easy = filterEasyRuns(activities, 180).sort((a,b)=>new Date(a.start_date)-new Date(b.start_date));
+  const labels = easy.map(a => new Date(a.start_date).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}));
+  const hfs = easy.map(a => Math.round(a.average_heartrate));
+  const ma = movingAvg(hfs, 4);
+  const points = easy.map((a,i) => ({ x: i, y: hfs[i] }));
+  const reg = linearRegression(points);
+  const trend = points.map(p => Math.round(reg.intercept + reg.slope*p.x));
+
+  if (window.chartHFTrend) window.chartHFTrend.destroy();
+  window.chartHFTrend = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [
+      { label: 'HF (avg)', data: hfs, borderColor: '#06B6D4', backgroundColor: '#06B6D4', tension: 0.2, pointRadius: 3, fill: false },
+      { label: '4-Run-Moving-Avg', data: ma, borderColor: '#0A2540', backgroundColor: '#0A2540', tension: 0.3, pointRadius: 0, borderWidth: 2, fill: false },
+      { label: 'Trend', data: trend, borderColor: reg.slope < 0 ? '#10B981' : '#EF4444', borderDash: [6,4], pointRadius: 0, fill: false },
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+      scales: { y: { title: { display: true, text: 'bpm' } } }
+    }
+  });
+}
+
+// Pace-Trend Chart
+function renderPaceTrendChart(activities) {
+  const ctx = document.getElementById('chartPaceTrend');
+  if (!ctx) return;
+  const easy = filterEasyRuns(activities, 180).sort((a,b)=>new Date(a.start_date)-new Date(b.start_date));
+  const labels = easy.map(a => new Date(a.start_date).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}));
+  // pace in min/km, dezimal (für Chart)
+  const paces = easy.map(a => (a.moving_time / 60) / (a.distance/1000));
+  const ma = movingAvg(paces, 4);
+  const points = easy.map((a,i) => ({ x: i, y: paces[i] }));
+  const reg = linearRegression(points);
+  const trend = points.map(p => +(reg.intercept + reg.slope*p.x).toFixed(2));
+
+  if (window.chartPaceTrend) window.chartPaceTrend.destroy();
+  window.chartPaceTrend = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [
+      { label: 'Pace (min/km)', data: paces.map(p => +p.toFixed(2)), borderColor: '#7DD3FC', backgroundColor: '#7DD3FC', tension: 0.2, pointRadius: 3, fill: false },
+      { label: '4-Run-Moving-Avg', data: ma.map(p => p != null ? +p.toFixed(2) : null), borderColor: '#0A2540', backgroundColor: '#0A2540', tension: 0.3, pointRadius: 0, borderWidth: 2, fill: false },
+      { label: 'Trend', data: trend, borderColor: reg.slope < 0 ? '#10B981' : '#EF4444', borderDash: [6,4], pointRadius: 0, fill: false },
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+      scales: { y: { reverse: true, title: { display: true, text: 'min/km (niedriger = schneller)' } } }
+    }
+  });
+}
+
+// RPE-Trend Chart (aggregiert pro Woche)
+function renderRPETrendChart(activities) {
+  const ctx = document.getElementById('chartRPETrend');
+  if (!ctx) return;
+  // Sammle (date, rpe) Paare aus localStorage
+  const pairs = [];
+  for (const a of activities) {
+    const rpe = parseInt(localStorage.getItem('rpe_' + a.id), 10);
+    if (isFinite(rpe) && rpe >= 1 && rpe <= 10) {
+      pairs.push({ date: new Date(a.start_date), rpe });
+    }
+  }
+  if (pairs.length < 2) {
+    if (window.chartRPETrend) window.chartRPETrend.destroy();
+    window.chartRPETrend = new Chart(ctx, {
+      type: 'bar', data: { labels: ['Noch keine RPE-Daten'], datasets: [{ data: [0], backgroundColor: '#e2e8f0' }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }} }
+    });
+    return;
+  }
+  // Pro Woche Median
+  const byWeek = {};
+  pairs.forEach(p => {
+    const wk = new Date(p.date); wk.setDate(wk.getDate() - wk.getDay()+1); // Monday
+    const key = wk.toISOString().slice(0,10);
+    (byWeek[key] = byWeek[key] || []).push(p.rpe);
+  });
+  const weeks = Object.keys(byWeek).sort();
+  const medians = weeks.map(k => {
+    const arr = byWeek[k].slice().sort((a,b)=>a-b);
+    const mid = Math.floor(arr.length/2);
+    return arr.length % 2 ? arr[mid] : (arr[mid-1]+arr[mid])/2;
+  });
+  const counts = weeks.map(k => byWeek[k].length);
+
+  if (window.chartRPETrend) window.chartRPETrend.destroy();
+  window.chartRPETrend = new Chart(ctx, {
+    type: 'line',
+    data: { labels: weeks.map(w => w.slice(5)), datasets: [
+      { label: 'Median RPE', data: medians, borderColor: '#06B6D4', backgroundColor: '#06B6D4', tension: 0.3, pointRadius: 5, fill: false },
+      { label: 'Sessions/Wo', data: counts, borderColor: '#7DD3FC', backgroundColor: '#7DD3FC', borderDash: [4,4], pointRadius: 0, yAxisID: 'y1' }
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+      scales: {
+        y: { min: 1, max: 10, title: { display: true, text: 'RPE' } },
+        y1: { position: 'right', grid: { display: false }, title: { display: true, text: 'N' } }
+      }
+    }
+  });
+}
+
+// RPE vs HF Scatter
+function renderRPEvsHFChart(activities) {
+  const ctx = document.getElementById('chartRPEvsHF');
+  if (!ctx) return;
+  const pts = [];
+  for (const a of activities) {
+    const rpe = parseInt(localStorage.getItem('rpe_' + a.id), 10);
+    if (isFinite(rpe) && rpe >= 1 && rpe <= 10 && a.average_heartrate) {
+      pts.push({ x: rpe, y: Math.round(a.average_heartrate), type: a.type });
+    }
+  }
+  if (window.chartRPEvsHF) window.chartRPEvsHF.destroy();
+  window.chartRPEvsHF = new Chart(ctx, {
+    type: 'scatter',
+    data: { datasets: [
+      { label: 'Run', data: pts.filter(p=>p.type==='Run'), backgroundColor: '#06B6D4' },
+      { label: 'Strength', data: pts.filter(p=>p.type==='WeightTraining'), backgroundColor: '#0A2540' },
+      { label: 'Other', data: pts.filter(p=>!['Run','WeightTraining'].includes(p.type)), backgroundColor: '#7DD3FC' },
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+      scales: {
+        x: { min: 0, max: 10, title: { display: true, text: 'RPE (subjektiv)' } },
+        y: { title: { display: true, text: 'avg HF (bpm)' } }
+      }
+    }
+  });
+}
+
+// Volumen-Ramp-Rate (Wochen-km Vorwoche vs aktuelle Woche)
+function computeRampRate(activities) {
+  const now = new Date();
+  // Aktuelle Woche (Mo bis heute)
+  const startThis = new Date(now); startThis.setHours(0,0,0,0); startThis.setDate(startThis.getDate() - ((startThis.getDay()+6)%7));
+  const startLast = new Date(startThis); startLast.setDate(startLast.getDate()-7);
+  const endLast = new Date(startThis);
+  const runs = activities.filter(a => a.type === 'Run');
+  const sumKm = (from, to) => runs.filter(r => {
+    const d = new Date(r.start_date);
+    return d >= from && d < to;
+  }).reduce((s,r) => s + r.distance/1000, 0);
+  const kmThis = sumKm(startThis, new Date(now.getTime() + 7*24*3600*1000));
+  const kmLast = sumKm(startLast, endLast);
+  // Avg letzte 4 Wochen (vor dieser Woche)
+  let sum4 = 0;
+  for (let i = 1; i <= 4; i++) {
+    const from = new Date(startThis); from.setDate(from.getDate() - i*7);
+    const to = new Date(startThis); to.setDate(to.getDate() - (i-1)*7);
+    sum4 += sumKm(from, to);
+  }
+  const avg4 = sum4 / 4;
+  const rampWoW = kmLast > 0 ? ((kmThis - kmLast)/kmLast)*100 : null;
+  const rampVs4 = avg4 > 0 ? ((kmThis - avg4)/avg4)*100 : null;
+  return { kmThis, kmLast, avg4, rampWoW, rampVs4 };
+}
+
+// Form-Score (0-100, composite)
+function computeFormScore(activities) {
+  // Komponenten: HF-Trend (sinkend = gut), Pace-Trend (sinkend = gut), RPE-Median (5-7 optimal), Volumen-Konsistenz, Ramp-Rate (<10% sicher)
+  const easy = filterEasyRuns(activities, 60);
+  let score = 50; // baseline
+  let factors = [];
+
+  // HF-Trend (letzte 4 vs vorherige 4 Easy-Runs)
+  if (easy.length >= 8) {
+    const lastN = easy.slice(-4);
+    const prevN = easy.slice(-8, -4);
+    const lastAvg = lastN.reduce((s,a)=>s+a.average_heartrate,0)/lastN.length;
+    const prevAvg = prevN.reduce((s,a)=>s+a.average_heartrate,0)/prevN.length;
+    const diff = lastAvg - prevAvg;
+    if (diff < -2) { score += 12; factors.push({c:'good', t:`HF gesunken ${Math.round(-diff)} bpm`}); }
+    else if (diff > 3) { score -= 10; factors.push({c:'warn', t:`HF gestiegen ${Math.round(diff)} bpm`}); }
+    else factors.push({c:'info', t:`HF stabil`});
+  }
+  // Pace-Trend
+  if (easy.length >= 8) {
+    const lastP = easy.slice(-4).map(a => (a.moving_time/60)/(a.distance/1000));
+    const prevP = easy.slice(-8,-4).map(a => (a.moving_time/60)/(a.distance/1000));
+    const lastAvg = lastP.reduce((s,v)=>s+v,0)/lastP.length;
+    const prevAvg = prevP.reduce((s,v)=>s+v,0)/prevP.length;
+    const diff = lastAvg - prevAvg; // negativ = schneller
+    if (diff < -0.1) { score += 10; factors.push({c:'good', t:`Pace schneller`}); }
+    else if (diff > 0.1) { score -= 8; factors.push({c:'warn', t:`Pace langsamer`}); }
+  }
+  // RPE-Median (letzte 10)
+  const rpes = [];
+  for (const a of activities.slice(0,30)) {
+    const r = parseInt(localStorage.getItem('rpe_'+a.id), 10);
+    if (isFinite(r) && r >= 1 && r <= 10) rpes.push(r);
+  }
+  if (rpes.length >= 3) {
+    const median = rpes.slice().sort((a,b)=>a-b)[Math.floor(rpes.length/2)];
+    if (median >= 5 && median <= 7) { score += 5; factors.push({c:'good', t:`RPE-Median ${median} optimal`}); }
+    else if (median > 7) { score -= 8; factors.push({c:'warn', t:`RPE-Median ${median} hoch — Übermüdung?`}); }
+    else if (median < 4) { score -= 3; factors.push({c:'info', t:`RPE-Median ${median} niedrig — mehr Intensität möglich`}); }
+  }
+  // Ramp-Rate
+  const ramp = computeRampRate(activities);
+  if (ramp.rampWoW != null) {
+    if (Math.abs(ramp.rampWoW) <= 10) { score += 8; factors.push({c:'good', t:`Volumen-Ramp ${ramp.rampWoW.toFixed(0)}%`}); }
+    else if (ramp.rampWoW > 25) { score -= 15; factors.push({c:'warn', t:`Ramp ${ramp.rampWoW.toFixed(0)}% — Verletzungsrisiko`}); }
+    else if (ramp.rampWoW < -25) { score -= 5; factors.push({c:'info', t:`Ramp ${ramp.rampWoW.toFixed(0)}% — Deload?`}); }
+  }
+  score = Math.max(0, Math.min(100, Math.round(score)));
+  return { score, factors, ramp };
+}
+
+function renderTrendsKPIs(activities) {
+  const easy = filterEasyRuns(activities, 180).sort((a,b)=>new Date(a.start_date)-new Date(b.start_date));
+
+  // HF-Trend KPI
+  const hfEl = document.getElementById('kpi-hf-trend');
+  if (hfEl) {
+    if (easy.length >= 8) {
+      const last4 = easy.slice(-4).reduce((s,a)=>s+a.average_heartrate,0)/4;
+      const prev4 = easy.slice(-8,-4).reduce((s,a)=>s+a.average_heartrate,0)/4;
+      const diff = last4 - prev4;
+      hfEl.textContent = (diff > 0 ? '+' : '') + Math.round(diff) + ' bpm';
+      hfEl.style.color = diff < -1 ? 'var(--success)' : diff > 2 ? 'var(--danger)' : '';
+    } else {
+      hfEl.textContent = `n=${easy.length}`;
+    }
+  }
+  // Pace-Trend KPI
+  const pcEl = document.getElementById('kpi-pace-trend');
+  if (pcEl) {
+    if (easy.length >= 8) {
+      const last4 = easy.slice(-4).map(a => (a.moving_time/60)/(a.distance/1000));
+      const prev4 = easy.slice(-8,-4).map(a => (a.moving_time/60)/(a.distance/1000));
+      const lastAvg = last4.reduce((s,v)=>s+v,0)/4;
+      const prevAvg = prev4.reduce((s,v)=>s+v,0)/4;
+      const diff = lastAvg - prevAvg; // negativ = schneller
+      const sign = diff < 0 ? '−' : '+';
+      const sec = Math.round(Math.abs(diff)*60);
+      pcEl.textContent = `${sign}${sec}s/km`;
+      pcEl.style.color = diff < -0.03 ? 'var(--success)' : diff > 0.05 ? 'var(--danger)' : '';
+    } else {
+      pcEl.textContent = `n=${easy.length}`;
+    }
+  }
+  // Ramp-Rate KPI
+  const ramp = computeRampRate(activities);
+  const rrEl = document.getElementById('kpi-ramp-rate');
+  if (rrEl) {
+    if (ramp.rampWoW != null) {
+      rrEl.textContent = (ramp.rampWoW > 0 ? '+' : '') + ramp.rampWoW.toFixed(0) + '%';
+      rrEl.style.color = Math.abs(ramp.rampWoW) <= 10 ? 'var(--success)' : ramp.rampWoW > 25 ? 'var(--danger)' : 'var(--warn)';
+      const metaEl = document.getElementById('kpi-ramp-meta');
+      if (metaEl) metaEl.innerHTML = `${ramp.kmThis.toFixed(1)} vs ${ramp.kmLast.toFixed(1)} km${Math.abs(ramp.rampWoW) > 25 ? ' ⚠️' : ''}`;
+    } else {
+      rrEl.textContent = '—';
+    }
+  }
+  // Form-Score
+  const form = computeFormScore(activities);
+  const fsEl = document.getElementById('kpi-form-score');
+  if (fsEl) fsEl.textContent = form.score;
+  const ftEl = document.getElementById('kpi-form-trend');
+  if (ftEl) {
+    const arrow = form.score >= 70 ? '↑ stark' : form.score >= 55 ? '→ solide' : form.score >= 40 ? '→ ok' : '↓ vorsichtig';
+    ftEl.textContent = arrow + ' · ' + form.factors.slice(0,2).map(f=>f.t).join(' · ');
+  }
+}
+
+function renderTrends(activities) {
+  if (!activities || !activities.length) return;
+  try {
+    renderHFTrendChart(activities);
+    renderPaceTrendChart(activities);
+    renderRPETrendChart(activities);
+    renderRPEvsHFChart(activities);
+    renderTrendsKPIs(activities);
+  } catch (e) {
+    console.warn('renderTrends failed:', e);
+  }
+}
 
 setInterval(stravaPull, 5*60*1000);
 </script>
