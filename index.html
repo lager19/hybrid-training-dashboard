@@ -3,16 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Hybrid Training Dashboard — München Marathon 2026</title>
+<title>Hybrid Training Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
 <style>
 :root { color-scheme: light;
-  --bg:#f8fafc; --card:#ffffff; --text:#0f172a; --muted:#64748b; --border:#e2e8f0;
-  --primary:#2563eb; --success:#16a34a; --warn:#ea580c; --danger:#dc2626; --accent:#7c3aed;
-  --z1:#94a3b8; --z2:#22c55e; --z3:#eab308; --z4:#f97316; --z5:#dc2626;
+  /* Fracto Design System — Navy / Cyan / Light-Blue */
+  --bg:#F4F7FB; --card:#ffffff; --text:#0A1F3F; --muted:#5B6A85; --border:#D8E0EC;
+  --primary:#0A2540;            /* Fracto Navy */
+  --primary-light:#1E3A5F;       /* Navy 80% */
+  --accent:#06B6D4;              /* Cyan */
+  --accent-light:#7DD3FC;        /* Light Blue */
+  --success:#10B981; --warn:#F59E0B; --danger:#EF4444;
+  --z1:#7DD3FC;                  /* Light Blue */
+  --z2:#06B6D4;                  /* Cyan */
+  --z3:#0A2540;                  /* Navy */
+  --z4:#F59E0B;                  /* Warning Amber */
+  --z5:#EF4444;                  /* Red */
 }
 * { box-sizing:border-box; }
-body { margin:0; padding:0; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:14px; line-height:1.5; }
+body { margin:0; padding:0; background:var(--bg); color:var(--text); font-family:'Inter','-apple-system',BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:14px; line-height:1.5; font-feature-settings:"cv11","ss01"; -webkit-font-smoothing:antialiased; }
+h1,h2,h3,h4,strong { font-weight:700; letter-spacing:-0.01em; }
+.value { font-weight:800; letter-spacing:-0.02em; }
 .container { max-width:1200px; margin:0 auto; padding:16px; }
 h1 { margin:0 0 4px; font-size:22px; font-weight:700; }
 h2 { margin:24px 0 12px; font-size:16px; font-weight:600; color:var(--text); }
@@ -59,8 +73,10 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
 .session .meta { font-size:11px; color:var(--muted); }
 .session input[type=checkbox] { width:18px; height:18px; cursor:pointer; }
 input,select,textarea { font-family:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; background:white; }
-button.primary { background:var(--primary); color:white; border:none; padding:8px 14px; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; }
-button.primary:hover { background:#1d4ed8; }
+button.primary { background:var(--primary); color:white; border:none; padding:8px 14px; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; transition:background .15s; }
+button.primary:hover { background:var(--primary-light); }
+button.accent { background:var(--accent); color:white; border:none; padding:8px 14px; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; }
+button.accent:hover { background:#0891B2; }
 button.ghost { background:transparent; border:1px solid var(--border); padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; }
 .muted { color:var(--muted); }
 .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
@@ -137,6 +153,7 @@ hr { border:none; border-top:1px solid var(--border); margin:20px 0; }
         <div class="wiz-step-dot"></div>
         <div class="wiz-step-dot"></div>
         <div class="wiz-step-dot"></div>
+        <div class="wiz-step-dot"></div>
       </div>
     </div>
     <div class="wiz-body">
@@ -155,9 +172,43 @@ hr { border:none; border-top:1px solid var(--border); margin:20px 0; }
         <div class="wiz-warn">⚠️ Wenn du <strong>schon ein eigenes Backend</strong> hast (z.B. weil jemand das für dich eingerichtet hat) oder den OAuth-Flow lieber überspringst: klick unten auf <em>"Schon eingerichtet"</em>.</div>
       </div>
 
-      <!-- STEP 1: Strava App -->
+      <!-- STEP 1: Sport-Selection -->
       <div class="wiz-pane" data-step="1">
-        <h3><span class="wiz-num">1</span>Strava-API-App anlegen</h3>
+        <h3>🏋️ Welche Sportarten?</h3>
+        <p>Wähle die Sportarten, die du regelmäßig trainierst. Nur diese werden im Dashboard angezeigt — Tabs, Charts und Plan-Einheiten passen sich an deine Auswahl an.</p>
+        <p class="muted" style="font-size:12px;">Du kannst das später jederzeit über das ⚙️-Settings-Menü ändern.</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;">
+          <label class="wiz-sport-card" style="border:2px solid var(--border); padding:14px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px;">
+            <input type="checkbox" id="wiz-sport-run" value="run" checked style="width:18px; height:18px;">
+            <div><div style="font-size:22px;">🏃</div><div style="font-weight:600;">Laufen</div><div style="font-size:11px; color:var(--muted);">Marathon/HM/10k/5k</div></div>
+          </label>
+          <label class="wiz-sport-card" style="border:2px solid var(--border); padding:14px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px;">
+            <input type="checkbox" id="wiz-sport-strength" value="strength" checked style="width:18px; height:18px;">
+            <div><div style="font-size:22px;">💪</div><div style="font-weight:600;">Krafttraining</div><div style="font-size:11px; color:var(--muted);">Hypertrophie / Strength</div></div>
+          </label>
+          <label class="wiz-sport-card" style="border:2px solid var(--border); padding:14px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px;">
+            <input type="checkbox" id="wiz-sport-bike" value="bike" style="width:18px; height:18px;">
+            <div><div style="font-size:22px;">🚴</div><div style="font-weight:600;">Radfahren</div><div style="font-size:11px; color:var(--muted);">Road/MTB/Indoor</div></div>
+          </label>
+          <label class="wiz-sport-card" style="border:2px solid var(--border); padding:14px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px;">
+            <input type="checkbox" id="wiz-sport-swim" value="swim" style="width:18px; height:18px;">
+            <div><div style="font-size:22px;">🏊</div><div style="font-weight:600;">Schwimmen</div><div style="font-size:11px; color:var(--muted);">Pool/Open Water</div></div>
+          </label>
+          <label class="wiz-sport-card" style="border:2px solid var(--border); padding:14px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px;">
+            <input type="checkbox" id="wiz-sport-mobility" value="mobility" checked style="width:18px; height:18px;">
+            <div><div style="font-size:22px;">🧘</div><div style="font-weight:600;">Mobility/Yoga</div><div style="font-size:11px; color:var(--muted);">Recovery/Flexibility</div></div>
+          </label>
+          <label class="wiz-sport-card" style="border:2px solid var(--border); padding:14px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px;">
+            <input type="checkbox" id="wiz-sport-hike" value="hike" style="width:18px; height:18px;">
+            <div><div style="font-size:22px;">🥾</div><div style="font-weight:600;">Wandern</div><div style="font-size:11px; color:var(--muted);">Trail/Hike</div></div>
+          </label>
+        </div>
+        <div class="wiz-info" style="margin-top:14px;">💡 Wenn du dir unsicher bist: wähle das, was du in den letzten 4 Wochen am häufigsten gemacht hast.</div>
+      </div>
+
+      <!-- STEP 2: Strava App (war 1) -->
+      <div class="wiz-pane" data-step="2">
+        <h3><span class="wiz-num">2</span>Strava-API-App anlegen</h3>
         <p>Auf <a href="https://www.strava.com/settings/api" target="_blank"><code>strava.com/settings/api</code></a> öffnen und falls noch keine App vorhanden, eine neue anlegen:</p>
         <ol>
           <li>Application Name: <code>Mein Training Dashboard</code> (frei wählbar)</li>
@@ -180,9 +231,9 @@ hr { border:none; border-top:1px solid var(--border); margin:20px 0; }
         <div class="wiz-warn">🔒 Der Client Secret bleibt in deinem Browser bzw. wandert gleich in deinen eigenen Cloudflare-Worker — er wird nirgendwo sonst hingeschickt. Behandle ihn wie ein Passwort.</div>
       </div>
 
-      <!-- STEP 2: Cloudflare Worker Deploy -->
-      <div class="wiz-pane" data-step="2">
-        <h3><span class="wiz-num">2</span>Cloudflare-Worker deployen</h3>
+      <!-- STEP 3: Cloudflare Worker Deploy -->
+      <div class="wiz-pane" data-step="3">
+        <h3><span class="wiz-num">3</span>Cloudflare-Worker deployen</h3>
         <p><strong>A. Cloudflare-Account anlegen</strong> (falls noch nicht):</p>
         <ol>
           <li>Gehe zu <a href="https://dash.cloudflare.com/sign-up" target="_blank">dash.cloudflare.com/sign-up</a></li>
@@ -223,9 +274,9 @@ hr { border:none; border-top:1px solid var(--border); margin:20px 0; }
         <div id="wiz-worker-result" style="margin-top:8px;"></div>
       </div>
 
-      <!-- STEP 3: OAuth -->
-      <div class="wiz-pane" data-step="3">
-        <h3><span class="wiz-num">3</span>Strava autorisieren (OAuth)</h3>
+      <!-- STEP 4: OAuth -->
+      <div class="wiz-pane" data-step="4">
+        <h3><span class="wiz-num">4</span>Strava autorisieren (OAuth)</h3>
         <p>Jetzt erlaubst du dem Worker, deine Strava-Daten zu lesen. Geht in 3 Klicks.</p>
         <ol>
           <li>Klick auf den unten generierten <strong>Strava-Autorisierungs-Link</strong> (öffnet sich in neuem Tab)</li>
@@ -240,9 +291,9 @@ hr { border:none; border-top:1px solid var(--border); margin:20px 0; }
         <div id="wiz-exchange-result" style="margin-top:8px;"></div>
       </div>
 
-      <!-- STEP 4: Personalize -->
-      <div class="wiz-pane" data-step="4">
-        <h3><span class="wiz-num">4</span>Personalisierung</h3>
+      <!-- STEP 5: Personalize -->
+      <div class="wiz-pane" data-step="5">
+        <h3><span class="wiz-num">5</span>Personalisierung</h3>
         <p>Damit Plan, Zonen und Paces zu dir passen, brauche ich vier Werte. Alle anpassbar später.</p>
         <div class="wiz-grid">
           <div>
@@ -294,8 +345,8 @@ hr { border:none; border-top:1px solid var(--border); margin:20px 0; }
         <input type="text" id="wiz-name" placeholder="z.B. Max">
       </div>
 
-      <!-- STEP 5: Done -->
-      <div class="wiz-pane" data-step="5">
+      <!-- STEP 6: Done -->
+      <div class="wiz-pane" data-step="6">
         <h3>✅ Fertig!</h3>
         <div class="wiz-success">Setup abgeschlossen. Dein Dashboard lädt jetzt deine Strava-Daten und passt Zonen, Paces und Wochenplan auf deine Eingaben an.</div>
         <p><strong>Was als Nächstes:</strong></p>
@@ -320,13 +371,165 @@ hr { border:none; border-top:1px solid var(--border); margin:20px 0; }
 
 <button id="wiz-reopen-btn" onclick="wizOpen(true)" style="display:none;">⚙️ Setup neu starten</button>
 
+<!-- ============ SETTINGS DRAWER ============ -->
+<div id="settings-overlay" class="wiz-overlay hidden" onclick="if(event.target===this) closeSettings()">
+  <div class="wiz-modal" style="max-width:540px;">
+    <div class="wiz-header">
+      <h2>⚙️ Einstellungen</h2>
+      <div class="sub">Sportarten, Ziele, Plan-Anpassungen</div>
+    </div>
+    <div class="wiz-body">
+      <h3>Sportarten</h3>
+      <p class="muted" style="font-size:12px; margin-bottom:8px;">Bestimmt welche Reiter und Charts im Dashboard erscheinen.</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <label style="display:flex; align-items:center; gap:8px; padding:8px; border:1px solid var(--border); border-radius:6px; cursor:pointer;"><input type="checkbox" id="set-sport-run" value="run"> 🏃 Laufen</label>
+        <label style="display:flex; align-items:center; gap:8px; padding:8px; border:1px solid var(--border); border-radius:6px; cursor:pointer;"><input type="checkbox" id="set-sport-strength" value="strength"> 💪 Krafttraining</label>
+        <label style="display:flex; align-items:center; gap:8px; padding:8px; border:1px solid var(--border); border-radius:6px; cursor:pointer;"><input type="checkbox" id="set-sport-bike" value="bike"> 🚴 Radfahren</label>
+        <label style="display:flex; align-items:center; gap:8px; padding:8px; border:1px solid var(--border); border-radius:6px; cursor:pointer;"><input type="checkbox" id="set-sport-swim" value="swim"> 🏊 Schwimmen</label>
+        <label style="display:flex; align-items:center; gap:8px; padding:8px; border:1px solid var(--border); border-radius:6px; cursor:pointer;"><input type="checkbox" id="set-sport-mobility" value="mobility"> 🧘 Mobility</label>
+        <label style="display:flex; align-items:center; gap:8px; padding:8px; border:1px solid var(--border); border-radius:6px; cursor:pointer;"><input type="checkbox" id="set-sport-hike" value="hike"> 🥾 Wandern</label>
+      </div>
+
+      <h3 style="margin-top:18px;">Wettkampf-Ziel</h3>
+      <div class="wiz-grid">
+        <div>
+          <label>Datum</label>
+          <input type="date" id="set-race-date">
+        </div>
+        <div>
+          <label>Distanz</label>
+          <select id="set-race-dist">
+            <option value="42.195">Marathon</option>
+            <option value="21.0975">Halbmarathon</option>
+            <option value="10">10 km</option>
+            <option value="5">5 km</option>
+          </select>
+        </div>
+      </div>
+      <div class="wiz-grid">
+        <div><label>Ziel-Zeit</label><input type="text" id="set-goal-time" placeholder="3:30:00"></div>
+        <div><label>Aktuelle PB</label><input type="text" id="set-pb-time"></div>
+      </div>
+
+      <h3 style="margin-top:18px;">Physiologie</h3>
+      <div class="wiz-grid">
+        <div><label>LTHR (bpm)</label><input type="number" id="set-lthr" min="120" max="220"></div>
+        <div><label>MaxHF (bpm)</label><input type="number" id="set-maxhf" min="140" max="230"></div>
+      </div>
+
+      <h3 style="margin-top:18px;">Plan-Anpassung</h3>
+      <label style="display:flex; align-items:center; gap:8px; padding:8px; border:1px solid var(--border); border-radius:6px; cursor:pointer;">
+        <input type="checkbox" id="set-rpe-after-sync"> RPE-Abfrage nach Strava-Sync
+      </label>
+      <div style="margin-top:8px;">
+        <label>Smoothing-Fenster (Anpassung erst nach N gleichgerichteten Datenpunkten)</label>
+        <input type="number" id="set-smoothing-window" min="1" max="5" style="max-width:80px;">
+      </div>
+
+      <h3 style="margin-top:18px; color:var(--danger);">Daten</h3>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="ghost" onclick="exportUserData()">📤 Daten exportieren</button>
+        <button class="ghost" onclick="wizOpen(true); closeSettings();">⚙️ Setup-Wizard öffnen</button>
+        <button class="ghost" style="color:var(--danger); border-color:var(--danger);" onclick="resetAllData()">🗑️ Alle Daten zurücksetzen</button>
+      </div>
+    </div>
+    <div class="wiz-footer">
+      <button class="ghost" onclick="closeSettings()">Abbrechen</button>
+      <button class="primary" onclick="saveSettings()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openSettings() {
+  const cfg = window.USER_CONFIG || JSON.parse(localStorage.getItem('userConfig') || 'null');
+  if (!cfg) { wizOpen(false); return; }
+  // Prefill
+  const sports = cfg.sports || [];
+  ['run','strength','bike','swim','mobility','hike'].forEach(s => {
+    const el = document.getElementById('set-sport-'+s);
+    if (el) el.checked = sports.includes(s);
+  });
+  if (cfg.race) {
+    document.getElementById('set-race-date').value = cfg.race.date || '';
+    document.getElementById('set-race-dist').value = String(cfg.race.distanceKm || 42.195);
+    document.getElementById('set-goal-time').value = cfg.race.goalTimeStr || '';
+    document.getElementById('set-pb-time').value = cfg.race.pbTimeStr || '';
+  }
+  if (cfg.physio) {
+    document.getElementById('set-lthr').value = cfg.physio.lthr || '';
+    document.getElementById('set-maxhf').value = cfg.physio.maxhf || '';
+  }
+  const settings = cfg.settings || {};
+  document.getElementById('set-rpe-after-sync').checked = settings.rpeAfterSync !== false;
+  document.getElementById('set-smoothing-window').value = settings.smoothingWindow || 3;
+  document.getElementById('settings-overlay').classList.remove('hidden');
+}
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.add('hidden');
+}
+function saveSettings() {
+  let cfg = JSON.parse(localStorage.getItem('userConfig') || '{}');
+  const sports = ['run','strength','bike','swim','mobility','hike'].filter(s => {
+    const el = document.getElementById('set-sport-'+s);
+    return el && el.checked;
+  });
+  if (sports.length === 0) { alert('Bitte mindestens eine Sportart wählen.'); return; }
+  cfg.sports = sports;
+  cfg.race = cfg.race || {};
+  cfg.race.date = document.getElementById('set-race-date').value || cfg.race.date;
+  cfg.race.distanceKm = parseFloat(document.getElementById('set-race-dist').value);
+  cfg.race.goalTimeStr = document.getElementById('set-goal-time').value.trim() || cfg.race.goalTimeStr;
+  cfg.race.pbTimeStr = document.getElementById('set-pb-time').value.trim() || null;
+  cfg.race.goalSec = wizParseTime(cfg.race.goalTimeStr || '');
+  cfg.race.pbSec = cfg.race.pbTimeStr ? wizParseTime(cfg.race.pbTimeStr) : null;
+  cfg.race.goalPaceSec = cfg.race.goalSec && cfg.race.distanceKm ? Math.round(cfg.race.goalSec/cfg.race.distanceKm) : null;
+  cfg.physio = cfg.physio || {};
+  const lthr = parseInt(document.getElementById('set-lthr').value,10);
+  const maxhf = parseInt(document.getElementById('set-maxhf').value,10);
+  cfg.physio.lthr = isFinite(lthr) && lthr > 0 ? lthr : null;
+  cfg.physio.maxhf = isFinite(maxhf) && maxhf > 0 ? maxhf : cfg.physio.maxhf;
+  cfg.settings = cfg.settings || {};
+  cfg.settings.rpeAfterSync = document.getElementById('set-rpe-after-sync').checked;
+  cfg.settings.smoothingWindow = parseInt(document.getElementById('set-smoothing-window').value,10) || 3;
+  localStorage.setItem('userConfig', JSON.stringify(cfg));
+  closeSettings();
+  // Soft reload for clean re-render
+  location.reload();
+}
+function exportUserData() {
+  const data = {
+    userConfig: JSON.parse(localStorage.getItem('userConfig') || 'null'),
+    kraftLog: JSON.parse(localStorage.getItem('kraftLog') || '[]'),
+    strengthHistory: JSON.parse(localStorage.getItem('strengthHistory') || '[]'),
+    checks: {},
+    exportedAt: new Date().toISOString(),
+  };
+  // Sammle alle checks_*-keys
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('checks_')) data.checks[k] = JSON.parse(localStorage.getItem(k));
+  }
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `training-data-${new Date().toISOString().slice(0,10)}.json`; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+function resetAllData() {
+  if (!confirm('Wirklich ALLE Dashboard-Daten löschen? Setup-Wizard wird neu gestartet. Nicht widerrufbar (außer du hast vorher exportiert).')) return;
+  localStorage.clear();
+  location.reload();
+}
+</script>
+
 <div style="background:#dbeafe; padding:4px 8px; font-size:10px; color:#1e40af; text-align:center;">FRIEND-DASHBOARD v2026-05-21 — Wizard-Edition · Daten zeigen sich erst nach Wizard-Abschluss</div>
 <div class="container">
 
 
 <script>
 /* ============ WIZARD STATE + LOGIC ============ */
-const WIZ_STEPS = 6; // 0..5
+const WIZ_STEPS = 7; // 0..6 (Welcome, Sports, Strava-App, Worker, OAuth, Personalize, Done)
 let wizStep = 0;
 let WIZ_WORKER_CODE_BASE64 = null; // populated below from external script
 
@@ -353,28 +556,40 @@ function wizNext() {
   if (!wizValidateStep(wizStep)) return;
   if (wizStep === WIZ_STEPS-1) { wizFinish(); return; }
   wizShowStep(wizStep+1);
-  if (wizStep === 1) wizPrefillCode();
-  if (wizStep === 2) wizPrefillCode();
+  if (wizStep === 3) wizPrefillCode(); // Worker-Step braucht Code
 }
 function wizBack() { wizShowStep(wizStep-1); }
 
 function wizValidateStep(s) {
-  // Soft validation; missing values cause an alert
+  // Step 1: Sports
   if (s === 1) {
+    const checked = ['run','strength','bike','swim','mobility','hike'].filter(id => {
+      const el = document.getElementById('wiz-sport-'+id);
+      return el && el.checked;
+    });
+    if (checked.length === 0) {
+      alert('Bitte mindestens eine Sportart wählen.');
+      return false;
+    }
+  }
+  // Step 2: Strava-App credentials
+  if (s === 2) {
     const cid = document.getElementById('wiz-client-id').value.trim();
     const cs = document.getElementById('wiz-client-secret').value.trim();
     if (!cid || !cs) {
-      if (!confirm('Client ID oder Secret fehlt. Trotzdem weiter? (Ohne diese Werte kannst du Schritt 3 nicht abschließen.)')) return false;
+      if (!confirm('Client ID oder Secret fehlt. Trotzdem weiter? (Ohne diese Werte kannst du Schritt 4 nicht abschließen.)')) return false;
     }
   }
-  if (s === 2) {
+  // Step 3: Worker
+  if (s === 3) {
     const url = document.getElementById('wiz-worker-url').value.trim();
     const key = document.getElementById('wiz-api-key').value.trim();
     if (!url || !key) {
       if (!confirm('Worker-URL oder API-Key fehlt. Trotzdem weiter?')) return false;
     }
   }
-  if (s === 4) {
+  // Step 5: Personalize
+  if (s === 5) {
     const rd = document.getElementById('wiz-race-date').value;
     const gt = document.getElementById('wiz-goal-time').value.trim();
     if (!rd || !gt) {
@@ -461,8 +676,8 @@ async function wizExchangeCode() {
 }
 
 function wizSkipToConfig() {
-  if (!confirm('Wirklich überspringen? Dann musst du Worker-URL/API-Key + Ziel-Daten gleich manuell eintragen. Du wirst zu Schritt 3 (Worker-Konfiguration) und Schritt 5 (Personalisierung) springen.')) return;
-  wizShowStep(2);
+  if (!confirm('Wirklich überspringen? Du wirst direkt zur Worker-Konfiguration (Schritt 3) springen.')) return;
+  wizShowStep(3);
 }
 
 function wizParseTime(t) {
@@ -488,13 +703,21 @@ function wizFinish() {
   const ckm = parseInt(document.getElementById('wiz-current-km').value,10);
   const name = document.getElementById('wiz-name').value.trim();
 
+  // Sports aus Step 1 lesen
+  const sports = ['run','strength','bike','swim','mobility','hike'].filter(id => {
+    const el = document.getElementById('wiz-sport-'+id);
+    return el && el.checked;
+  });
+
   const goalSec = wizParseTime(gtime);
   const pbSec = ptime ? wizParseTime(ptime) : null;
   const goalPaceSec = goalSec && rdist ? Math.round(goalSec/rdist) : null;
 
   const cfg = {
-    setupVersion: 2,
+    setupVersion: CURRENT_SCHEMA_VERSION,
     setupDoneAt: new Date().toISOString(),
+    sports: sports.length ? sports : ['run','strength','mobility'],
+    settings: { rpeAfterSync: true, smoothingWindow: 3, syncIntervalMin: 5, theme: 'fracto' },
     strava: { clientId: cid || null, clientSecretHint: cs ? '***'+cs.slice(-4) : null },
     worker: { url: wurl, apiKey: wkey },
     race: {
@@ -529,6 +752,13 @@ function wizOpen(prefillFromExisting) {
     try {
       const cfg = JSON.parse(localStorage.getItem('userConfig') || 'null');
       if (cfg) {
+        // Sports prefill
+        if (Array.isArray(cfg.sports)) {
+          ['run','strength','bike','swim','mobility','hike'].forEach(id => {
+            const el = document.getElementById('wiz-sport-'+id);
+            if (el) el.checked = cfg.sports.includes(id);
+          });
+        }
         if (cfg.strava && cfg.strava.clientId) document.getElementById('wiz-client-id').value = cfg.strava.clientId;
         if (cfg.worker) {
           document.getElementById('wiz-worker-url').value = cfg.worker.url || '';
@@ -609,12 +839,40 @@ function applyUserConfig(cfg) {
   }
 }
 
+/* ============ MIGRATIONS ============ */
+const CURRENT_SCHEMA_VERSION = 3;
+function migrateUserConfig(cfg) {
+  if (!cfg) return cfg;
+  const v = cfg.setupVersion || 1;
+  let changed = false;
+  // v1 → v2: physio/race struct (already done by old wizard)
+  if (v < 2) {
+    cfg.race = cfg.race || {};
+    cfg.physio = cfg.physio || {};
+    cfg.worker = cfg.worker || { url: cfg.workerUrl || null, apiKey: cfg.apiKey || null };
+    changed = true;
+  }
+  // v2 → v3: sports[] + settings
+  if (v < 3) {
+    // Default: alle Sportarten an wenn nicht spezifiziert (rückwärtskompatibel)
+    cfg.sports = cfg.sports || ['run','strength','mobility'];
+    cfg.settings = cfg.settings || { rpeAfterSync: true, smoothingWindow: 3, syncIntervalMin: 5, theme: 'fracto' };
+    changed = true;
+  }
+  if (changed) {
+    cfg.setupVersion = CURRENT_SCHEMA_VERSION;
+    try { localStorage.setItem('userConfig', JSON.stringify(cfg)); } catch(e) { console.warn('Migration save failed', e); }
+    console.log(`[Migration] userConfig upgraded ${v} → ${CURRENT_SCHEMA_VERSION}`);
+  }
+  return cfg;
+}
+
 /* ============ BOOT ============ */
 document.addEventListener('DOMContentLoaded', function() {
   let cfg = null;
   try { cfg = JSON.parse(localStorage.getItem('userConfig') || 'null'); } catch(e) {}
+  cfg = migrateUserConfig(cfg);
   if (!cfg || !cfg.worker || !cfg.worker.url || !cfg.race || !cfg.race.date) {
-    // Show wizard
     document.getElementById('wiz-overlay').classList.remove('hidden');
     document.getElementById('wiz-reopen-btn').style.display = 'none';
     wizShowStep(0);
@@ -622,6 +880,7 @@ document.addEventListener('DOMContentLoaded', function() {
   } else {
     document.getElementById('wiz-reopen-btn').style.display = 'block';
     applyUserConfig(cfg);
+    applySportsVisibility(cfg.sports || ['run','strength','mobility']);
   }
 });
 </script>
@@ -630,32 +889,72 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>WIZ_WORKER_CODE_BASE64 = 'LyoqCiAqIENsb3VkZmxhcmUgV29ya2VyIOKAlCBTdHJhdmEtQVBJLVByb3h5IGbDvHIgTWFyYXRob24tMjAyNiBEYXNoYm9hcmQKICoKICogRW5kcHVua3RlOgogKiAgIEdFVCAgLyAgICAgICAgICAgICAg4oaSIFN0YXR1cyArIEVuZHBvaW50LUxpc3RlCiAqICAgR0VUICAvYXRobGV0ZSAgICAgICDihpIgL2FwaS92My9hdGhsZXRlIChVc2VyLVByb2ZpbGUpCiAqICAgR0VUICAvc3RhdHMgICAgICAgICDihpIgL2FwaS92My9hdGhsZXRlcy97aWR9L3N0YXRzIChMaWZldGltZS9ZVEQvUmVjZW50IFRvdGFscykKICogICBHRVQgIC9hY3Rpdml0aWVzICAgIOKGkiAvYXBpL3YzL2F0aGxldGUvYWN0aXZpdGllcwogKiAgICAgICAgICAgICAgICAgICAgICAgICBRdWVyeTogP2FmdGVyPTx1bml4LXRzPiAoZGVmYXVsdDogdm9yIDMwIFRhZ2VuKQogKiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgP3Blcl9wYWdlPTxuPiAgICAoZGVmYXVsdDogMzAsIG1heCAyMDApCiAqCiAqIEF1dGggKG9wdGlvbmFsIGFiZXIgZW1wZm9obGVuKTogSGVhZGVyICJYLUFQSS1LZXk6IDxlbnYuQVBJX0tFWT4iCiAqCiAqIFJlcXVpcmVkIEVudmlyb25tZW50IFZhcmlhYmxlcyAoaW0gQ2xvdWRmbGFyZSBEYXNoYm9hcmQgc2V0emVuKToKICogICBTVFJBVkFfQ0xJRU5UX0lEICAgICAgIOKAlCBkZWluZSBTdHJhdmEgQXBwIENsaWVudC1JRCAoei5CLiAxMzk3ODgpCiAqICAgU1RSQVZBX0NMSUVOVF9TRUNSRVQgICDigJQgR2VoZWltZXIgQ2xpZW50c2NobMO8c3NlbAogKiAgIFNUUkFWQV9SRUZSRVNIX1RPS0VOICAg4oCUIEluaXRpYWwtUmVmcmVzaC1Ub2tlbiBhdXMgc3RyYXZhLmNvbS9zZXR0aW5ncy9hcGkKICogICBBUElfS0VZICAgICAgICAgICAgICAgIOKAlCBiZWxpZWJpZ2UgUmFuZG9tLVplaWNoZW5rZXR0ZSAob3B0aW9uYWwsIHNjaMO8dHp0IFdvcmtlciB2b3IgRnJlbWR6dWdyaWZmKQogKgogKiBPcHRpb25hbCBLViBCaW5kaW5nIChmw7xyIFRva2VuLUNhY2hpbmcsIHNwYXJ0IFN0cmF2YS1RdW90YSk6CiAqICAgU1RSQVZBX0tWICDigJQgV29ya2Vycy1LVi1OYW1lc3BhY2U7IFdvcmtlciBzcGVpY2hlcnQgaGllciBkZW4gYWt0dWVsbGVuIEFjY2Vzcy1Ub2tlbiArIGdnZi4gcm90aWVydGVuIFJlZnJlc2gtVG9rZW4KICovCgpleHBvcnQgZGVmYXVsdCB7CiAgYXN5bmMgZmV0Y2gocmVxdWVzdCwgZW52LCBjdHgpIHsKICAgIGNvbnN0IHVybCA9IG5ldyBVUkwocmVxdWVzdC51cmwpOwogICAgY29uc3QgY29yc0hlYWRlcnMgPSB7CiAgICAgICdBY2Nlc3MtQ29udHJvbC1BbGxvdy1PcmlnaW4nOiAnKicsCiAgICAgICdBY2Nlc3MtQ29udHJvbC1BbGxvdy1NZXRob2RzJzogJ0dFVCwgT1BUSU9OUycsCiAgICAgICdBY2Nlc3MtQ29udHJvbC1BbGxvdy1IZWFkZXJzJzogJ0NvbnRlbnQtVHlwZSwgWC1BUEktS2V5JywKICAgICAgJ0FjY2Vzcy1Db250cm9sLU1heC1BZ2UnOiAnODY0MDAnLAogICAgfTsKCiAgICBpZiAocmVxdWVzdC5tZXRob2QgPT09ICdPUFRJT05TJykgewogICAgICByZXR1cm4gbmV3IFJlc3BvbnNlKG51bGwsIHsgaGVhZGVyczogY29yc0hlYWRlcnMgfSk7CiAgICB9CgogICAgLy8gT3B0aW9uYWwgQVBJLUtleSBjaGVjawogICAgaWYgKGVudi5BUElfS0VZKSB7CiAgICAgIGNvbnN0IHByb3ZpZGVkID0gcmVxdWVzdC5oZWFkZXJzLmdldCgnWC1BUEktS2V5JykgfHwgdXJsLnNlYXJjaFBhcmFtcy5nZXQoJ2FwaV9rZXknKTsKICAgICAgaWYgKHByb3ZpZGVkICE9PSBlbnYuQVBJX0tFWSkgewogICAgICAgIHJldHVybiBqc29uUmVzcG9uc2UoeyBlcnJvcjogJ3VuYXV0aG9yaXplZCcgfSwgNDAxLCBjb3JzSGVhZGVycyk7CiAgICAgIH0KICAgIH0KCiAgICB0cnkgewogICAgICAvLyBSb290IC8gc3RhdHVzCiAgICAgIGlmICh1cmwucGF0aG5hbWUgPT09ICcvJyB8fCB1cmwucGF0aG5hbWUgPT09ICcnKSB7CiAgICAgICAgcmV0dXJuIGpzb25SZXNwb25zZSh7CiAgICAgICAgICBzdGF0dXM6ICdvaycsCiAgICAgICAgICBuYW1lOiAnc3RyYXZhLXByb3h5JywKICAgICAgICAgIGVuZHBvaW50czogWycvYXRobGV0ZScsICcvc3RhdHMnLCAnL2FjdGl2aXRpZXM/YWZ0ZXI9PHVuaXgtdHM+JnBlcl9wYWdlPTxuPicsICcvZXhjaGFuZ2U/Y29kZT08b2F1dGgtY29kZT4nXSwKICAgICAgICAgIGF1dGhSZXF1aXJlZDogISFlbnYuQVBJX0tFWSwKICAgICAgICB9LCAyMDAsIGNvcnNIZWFkZXJzKTsKICAgICAgfQoKICAgICAgLy8gT0F1dGggQ29kZS1FeGNoYW5nZSAoZsO8ciBTY29wZS1VcGdyYWRlIG9obmUgRW52LVZhci1FZGl0KQogICAgICBpZiAodXJsLnBhdGhuYW1lID09PSAnL2V4Y2hhbmdlJykgewogICAgICAgIGNvbnN0IGNvZGUgPSB1cmwuc2VhcmNoUGFyYW1zLmdldCgnY29kZScpOwogICAgICAgIGlmICghY29kZSkgcmV0dXJuIGpzb25SZXNwb25zZSh7IGVycm9yOiAnbWlzc2luZyBjb2RlIHBhcmFtZXRlcicgfSwgNDAwLCBjb3JzSGVhZGVycyk7CiAgICAgICAgY29uc3QgdG9rZW5SZXMgPSBhd2FpdCBmZXRjaCgnaHR0cHM6Ly93d3cuc3RyYXZhLmNvbS9hcGkvdjMvb2F1dGgvdG9rZW4nLCB7CiAgICAgICAgICBtZXRob2Q6ICdQT1NUJywKICAgICAgICAgIGhlYWRlcnM6IHsgJ0NvbnRlbnQtVHlwZSc6ICdhcHBsaWNhdGlvbi9qc29uJyB9LAogICAgICAgICAgYm9keTogSlNPTi5zdHJpbmdpZnkoewogICAgICAgICAgICBjbGllbnRfaWQ6IGVudi5TVFJBVkFfQ0xJRU5UX0lELAogICAgICAgICAgICBjbGllbnRfc2VjcmV0OiBlbnYuU1RSQVZBX0NMSUVOVF9TRUNSRVQsCiAgICAgICAgICAgIGNvZGU6IGNvZGUsCiAgICAgICAgICAgIGdyYW50X3R5cGU6ICdhdXRob3JpemF0aW9uX2NvZGUnLAogICAgICAgICAgfSksCiAgICAgICAgfSk7CiAgICAgICAgY29uc3QgdHh0ID0gYXdhaXQgdG9rZW5SZXMudGV4dCgpOwogICAgICAgIGlmICghdG9rZW5SZXMub2spIHsKICAgICAgICAgIHJldHVybiBqc29uUmVzcG9uc2UoeyBlcnJvcjogYFN0cmF2YSB0b2tlbiBleGNoYW5nZSAke3Rva2VuUmVzLnN0YXR1c306ICR7dHh0fWAgfSwgNTAyLCBjb3JzSGVhZGVycyk7CiAgICAgICAgfQogICAgICAgIGNvbnN0IHRva2VucyA9IEpTT04ucGFyc2UodHh0KTsKICAgICAgICAvLyBQZXJzaXN0IGluIEtWIGlmIGF2YWlsYWJsZQogICAgICAgIGlmIChlbnYuU1RSQVZBX0tWKSB7CiAgICAgICAgICBhd2FpdCBlbnYuU1RSQVZBX0tWLnB1dCgndG9rZW5zJywgSlNPTi5zdHJpbmdpZnkoewogICAgICAgICAgICBhY2Nlc3NfdG9rZW46IHRva2Vucy5hY2Nlc3NfdG9rZW4sCiAgICAgICAgICAgIHJlZnJlc2hfdG9rZW46IHRva2Vucy5yZWZyZXNoX3Rva2VuLAogICAgICAgICAgICBleHBpcmVzX2F0OiB0b2tlbnMuZXhwaXJlc19hdCwKICAgICAgICAgICAgc2NvcGU6IHRva2Vucy5zY29wZSB8fCAodG9rZW5zLmF0aGxldGUgJiYgdG9rZW5zLmF0aGxldGUuc2NvcGUpIHx8ICd1bmtub3duJywKICAgICAgICAgICAgdXBkYXRlZF9hdDogTWF0aC5mbG9vcihEYXRlLm5vdygpIC8gMTAwMCksCiAgICAgICAgICB9KSk7CiAgICAgICAgfQogICAgICAgIHJldHVybiBqc29uUmVzcG9uc2UoewogICAgICAgICAgc3RhdHVzOiAnc3VjY2VzcycsCiAgICAgICAgICBtZXNzYWdlOiBlbnYuU1RSQVZBX0tWID8gJ1Rva2VucyBpbiBLViBnZXNwZWljaGVydC4gRW5kcG9pbnRzIHNvbGx0ZW4gYWIgc29mb3J0IGZ1bmt0aW9uaWVyZW4uJyA6ICdLViBuaWNodCBnZWJ1bmRlbiDigJQga29waWVyZSByZWZyZXNoX3Rva2VuIGluIFNUUkFWQV9SRUZSRVNIX1RPS0VOIEVudi1WYXIgdW5kIHJlLWRlcGxveS4nLAogICAgICAgICAgYWNjZXNzX3Rva2VuX3ByZXZpZXc6IHRva2Vucy5hY2Nlc3NfdG9rZW4uc2xpY2UoMCwgMTApICsgJy4uLicsCiAgICAgICAgICByZWZyZXNoX3Rva2VuOiBlbnYuU1RSQVZBX0tWID8gJ2luIEtWIGdlc3BlaWNoZXJ0JyA6IHRva2Vucy5yZWZyZXNoX3Rva2VuLAogICAgICAgICAgZXhwaXJlc19hdDogdG9rZW5zLmV4cGlyZXNfYXQsCiAgICAgICAgICBzY29wZTogdG9rZW5zLnNjb3BlLAogICAgICAgICAgYXRobGV0ZTogdG9rZW5zLmF0aGxldGUgPyB7IGlkOiB0b2tlbnMuYXRobGV0ZS5pZCwgZmlyc3RuYW1lOiB0b2tlbnMuYXRobGV0ZS5maXJzdG5hbWUsIGxhc3RuYW1lOiB0b2tlbnMuYXRobGV0ZS5sYXN0bmFtZSB9IDogbnVsbCwKICAgICAgICB9LCAyMDAsIGNvcnNIZWFkZXJzKTsKICAgICAgfQoKICAgICAgY29uc3QgYWNjZXNzVG9rZW4gPSBhd2FpdCBnZXRBY2Nlc3NUb2tlbihlbnYpOwoKICAgICAgLy8gUm91dGUgdG8gU3RyYXZhCiAgICAgIGxldCBzdHJhdmFVcmw7CiAgICAgIGlmICh1cmwucGF0aG5hbWUgPT09ICcvYXRobGV0ZScpIHsKICAgICAgICBzdHJhdmFVcmwgPSAnaHR0cHM6Ly93d3cuc3RyYXZhLmNvbS9hcGkvdjMvYXRobGV0ZSc7CiAgICAgIH0gZWxzZSBpZiAodXJsLnBhdGhuYW1lID09PSAnL3N0YXRzJykgewogICAgICAgIC8vIE5lZWQgYXRobGV0ZSBJRCBmaXJzdAogICAgICAgIGNvbnN0IG1lID0gYXdhaXQgc3RyYXZhRmV0Y2goJ2h0dHBzOi8vd3d3LnN0cmF2YS5jb20vYXBpL3YzL2F0aGxldGUnLCBhY2Nlc3NUb2tlbik7CiAgICAgICAgc3RyYXZhVXJsID0gYGh0dHBzOi8vd3d3LnN0cmF2YS5jb20vYXBpL3YzL2F0aGxldGVzLyR7bWUuaWR9L3N0YXRzYDsKICAgICAgfSBlbHNlIGlmICh1cmwucGF0aG5hbWUgPT09ICcvYWN0aXZpdGllcycpIHsKICAgICAgICBjb25zdCBhZnRlciA9IHVybC5zZWFyY2hQYXJhbXMuZ2V0KCdhZnRlcicpCiAgICAgICAgICB8fCBNYXRoLmZsb29yKChEYXRlLm5vdygpIC0gMzAgKiAyNCAqIDM2MDAgKiAxMDAwKSAvIDEwMDApOwogICAgICAgIGNvbnN0IHBlclBhZ2UgPSBNYXRoLm1pbihwYXJzZUludCh1cmwuc2VhcmNoUGFyYW1zLmdldCgncGVyX3BhZ2UnKSB8fCAnMzAnLCAxMCksIDIwMCk7CiAgICAgICAgc3RyYXZhVXJsID0gYGh0dHBzOi8vd3d3LnN0cmF2YS5jb20vYXBpL3YzL2F0aGxldGUvYWN0aXZpdGllcz9hZnRlcj0ke2FmdGVyfSZwZXJfcGFnZT0ke3BlclBhZ2V9YDsKICAgICAgfSBlbHNlIHsKICAgICAgICByZXR1cm4ganNvblJlc3BvbnNlKHsgZXJyb3I6ICd1bmtub3duIGVuZHBvaW50JywgdHJ5OiBbJy9hdGhsZXRlJywgJy9zdGF0cycsICcvYWN0aXZpdGllcyddIH0sIDQwNCwgY29yc0hlYWRlcnMpOwogICAgICB9CgogICAgICBjb25zdCBkYXRhID0gYXdhaXQgc3RyYXZhRmV0Y2goc3RyYXZhVXJsLCBhY2Nlc3NUb2tlbik7CiAgICAgIHJldHVybiBqc29uUmVzcG9uc2UoZGF0YSwgMjAwLCBjb3JzSGVhZGVycyk7CgogICAgfSBjYXRjaCAoZXJyKSB7CiAgICAgIHJldHVybiBqc29uUmVzcG9uc2UoeyBlcnJvcjogU3RyaW5nKGVyci5tZXNzYWdlIHx8IGVycikgfSwgNTAwLCBjb3JzSGVhZGVycyk7CiAgICB9CiAgfQp9OwoKZnVuY3Rpb24ganNvblJlc3BvbnNlKG9iaiwgc3RhdHVzLCBleHRyYUhlYWRlcnMgPSB7fSkgewogIHJldHVybiBuZXcgUmVzcG9uc2UoSlNPTi5zdHJpbmdpZnkob2JqLCBudWxsLCAyKSwgewogICAgc3RhdHVzLAogICAgaGVhZGVyczogeyAnQ29udGVudC1UeXBlJzogJ2FwcGxpY2F0aW9uL2pzb24nLCAuLi5leHRyYUhlYWRlcnMgfQogIH0pOwp9Cgphc3luYyBmdW5jdGlvbiBzdHJhdmFGZXRjaCh1cmwsIHRva2VuKSB7CiAgY29uc3QgciA9IGF3YWl0IGZldGNoKHVybCwgeyBoZWFkZXJzOiB7IEF1dGhvcml6YXRpb246IGBCZWFyZXIgJHt0b2tlbn1gIH0gfSk7CiAgY29uc3QgdGV4dCA9IGF3YWl0IHIudGV4dCgpOwogIGxldCBib2R5OwogIHRyeSB7IGJvZHkgPSBKU09OLnBhcnNlKHRleHQpOyB9IGNhdGNoIHsgYm9keSA9IHRleHQ7IH0KICBpZiAoIXIub2spIHsKICAgIHRocm93IG5ldyBFcnJvcihgU3RyYXZhICR7ci5zdGF0dXN9OiAke3R5cGVvZiBib2R5ID09PSAnc3RyaW5nJyA/IGJvZHkgOiBKU09OLnN0cmluZ2lmeShib2R5KX1gKTsKICB9CiAgcmV0dXJuIGJvZHk7Cn0KCmFzeW5jIGZ1bmN0aW9uIGdldEFjY2Vzc1Rva2VuKGVudikgewogIC8vIFRyeSBjYWNoZSBmaXJzdCAoQ2xvdWRmbGFyZSBLVikKICBpZiAoZW52LlNUUkFWQV9LVikgewogICAgY29uc3QgY2FjaGVkID0gYXdhaXQgZW52LlNUUkFWQV9LVi5nZXQoJ3Rva2VucycsIHsgdHlwZTogJ2pzb24nIH0pOwogICAgaWYgKGNhY2hlZCAmJiBjYWNoZWQuYWNjZXNzX3Rva2VuICYmIGNhY2hlZC5leHBpcmVzX2F0ID4gKERhdGUubm93KCkgLyAxMDAwKSArIDYwKSB7CiAgICAgIHJldHVybiBjYWNoZWQuYWNjZXNzX3Rva2VuOwogICAgfQogIH0KCiAgLy8gRGV0ZXJtaW5lIHJlZnJlc2ggdG9rZW4gdG8gdXNlCiAgbGV0IHJlZnJlc2hUb2tlbiA9IGVudi5TVFJBVkFfUkVGUkVTSF9UT0tFTjsKICBpZiAoZW52LlNUUkFWQV9LVikgewogICAgY29uc3QgY2FjaGVkID0gYXdhaXQgZW52LlNUUkFWQV9LVi5nZXQoJ3Rva2VucycsIHsgdHlwZTogJ2pzb24nIH0pOwogICAgaWYgKGNhY2hlZCAmJiBjYWNoZWQucmVmcmVzaF90b2tlbikgewogICAgICByZWZyZXNoVG9rZW4gPSBjYWNoZWQucmVmcmVzaF90b2tlbjsKICAgIH0KICB9CgogIGlmICghcmVmcmVzaFRva2VuKSB7CiAgICB0aHJvdyBuZXcgRXJyb3IoJ05vIHJlZnJlc2ggdG9rZW4gYXZhaWxhYmxlLiBTZXQgU1RSQVZBX1JFRlJFU0hfVE9LRU4gZW52IHZhci4nKTsKICB9CgogIGNvbnN0IHRva2VuUmVzID0gYXdhaXQgZmV0Y2goJ2h0dHBzOi8vd3d3LnN0cmF2YS5jb20vYXBpL3YzL29hdXRoL3Rva2VuJywgewogICAgbWV0aG9kOiAnUE9TVCcsCiAgICBoZWFkZXJzOiB7ICdDb250ZW50LVR5cGUnOiAnYXBwbGljYXRpb24vanNvbicgfSwKICAgIGJvZHk6IEpTT04uc3RyaW5naWZ5KHsKICAgICAgY2xpZW50X2lkOiBlbnYuU1RSQVZBX0NMSUVOVF9JRCwKICAgICAgY2xpZW50X3NlY3JldDogZW52LlNUUkFWQV9DTElFTlRfU0VDUkVULAogICAgICBncmFudF90eXBlOiAncmVmcmVzaF90b2tlbicsCiAgICAgIHJlZnJlc2hfdG9rZW46IHJlZnJlc2hUb2tlbiwKICAgIH0pCiAgfSk7CgogIGNvbnN0IHRleHQgPSBhd2FpdCB0b2tlblJlcy50ZXh0KCk7CiAgaWYgKCF0b2tlblJlcy5vaykgewogICAgdGhyb3cgbmV3IEVycm9yKGBUb2tlbi1yZWZyZXNoIGZhaWxlZCAoJHt0b2tlblJlcy5zdGF0dXN9KTogJHt0ZXh0fWApOwogIH0KICBjb25zdCB0b2tlbnMgPSBKU09OLnBhcnNlKHRleHQpOwoKICAvLyBQZXJzaXN0IGludG8gS1YgKHNvIHdlIGRvbid0IHJlZnJlc2ggb24gZXZlcnkgY2FsbCBBTkQgc28gcm90YXRlZCByZWZyZXNoIHRva2VucyBhcmUga2VwdCkKICBpZiAoZW52LlNUUkFWQV9LVikgewogICAgYXdhaXQgZW52LlNUUkFWQV9LVi5wdXQoJ3Rva2VucycsIEpTT04uc3RyaW5naWZ5KHsKICAgICAgYWNjZXNzX3Rva2VuOiB0b2tlbnMuYWNjZXNzX3Rva2VuLAogICAgICByZWZyZXNoX3Rva2VuOiB0b2tlbnMucmVmcmVzaF90b2tlbiwKICAgICAgZXhwaXJlc19hdDogdG9rZW5zLmV4cGlyZXNfYXQsCiAgICAgIHVwZGF0ZWRfYXQ6IE1hdGguZmxvb3IoRGF0ZS5ub3coKSAvIDEwMDApLAogICAgfSkpOwogIH0KCiAgcmV0dXJuIHRva2Vucy5hY2Nlc3NfdG9rZW47Cn0K';</script>
 
 
-<div class="card" style="background:linear-gradient(135deg,#1e293b 0%,#334155 100%); color:white; border:none;">
+<div class="card" style="background:linear-gradient(135deg,#0A2540 0%,#1E3A5F 100%); color:white; border:none; position:relative;">
 <div style="display:flex; justify-content:space-between; align-items:start; flex-wrap:wrap; gap:12px;">
 <div>
-<h1 style="color:white; margin:0;">🏃‍♂️ Hybrid Training Dashboard</h1>
-<div style="color:#cbd5e1; font-size:13px; margin-top:4px;">München Marathon 2026 — 11. Oktober</div>
+<h1 style="color:white; margin:0; font-weight:800;">Hybrid Training Dashboard</h1>
+<div style="color:#7DD3FC; font-size:13px; margin-top:4px; font-weight:500;">Lade Wettkampf-Daten…</div>
 </div>
 <div style="text-align:right;">
-<div id="countdown" style="font-size:32px; font-weight:700;">--</div>
-<div style="color:#cbd5e1; font-size:12px;">Tage bis Marathon</div>
+<div id="countdown" style="font-size:32px; font-weight:800; color:white;">--</div>
+<div style="color:#7DD3FC; font-size:12px; font-weight:500;">Tage bis Wettkampf</div>
 </div>
 </div>
-<div style="margin-top:16px; display:flex; gap:6px; flex-wrap:wrap;">
-<div id="phase-badge" style="background:#fbbf24; color:#78350f; padding:4px 10px; border-radius:14px; font-size:12px; font-weight:600;">Phase wird geladen…</div>
-<div id="week-badge" style="background:#3b82f6; color:white; padding:4px 10px; border-radius:14px; font-size:12px; font-weight:600;">Woche --/21</div>
+<div style="margin-top:16px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+<div id="phase-badge" style="background:#06B6D4; color:white; padding:4px 10px; border-radius:14px; font-size:12px; font-weight:700;">Phase wird geladen…</div>
+<div id="week-badge" style="background:rgba(125,211,252,0.2); color:#7DD3FC; padding:4px 10px; border-radius:14px; font-size:12px; font-weight:700;">Woche --/21</div>
+<div style="flex:1;"></div>
+<button onclick="if(typeof stravaPull==='function') stravaPull()" style="background:#06B6D4; color:white; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">🔄 Strava-Sync</button>
+<button onclick="openSettings()" title="Einstellungen" style="background:rgba(255,255,255,0.1); color:white; border:none; padding:6px 10px; border-radius:6px; font-size:14px; cursor:pointer;">⚙️</button>
 </div>
 </div>
 
 
 
-<div class="card" style="padding:6px; margin-bottom:12px;">
-  <div style="display:flex; gap:4px; background:#f1f5f9; padding:4px; border-radius:6px;">
-    <button id="tab-both" class="tab-btn active" onclick="setView('both')" style="flex:1; background:white; border:none; padding:8px; border-radius:4px; font-weight:600; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.1);">📊 Beides</button>
-    <button id="tab-run" class="tab-btn" onclick="setView('run')" style="flex:1; background:transparent; border:none; padding:8px; border-radius:4px; font-weight:600; cursor:pointer; color:var(--muted);">🏃 Laufen</button>
-    <button id="tab-strength" class="tab-btn" onclick="setView('strength')" style="flex:1; background:transparent; border:none; padding:8px; border-radius:4px; font-weight:600; cursor:pointer; color:var(--muted);">💪 Krafttraining</button>
+<div class="card" id="tabs-container" style="padding:6px; margin-bottom:12px;">
+  <div style="display:flex; gap:4px; background:#f1f5f9; padding:4px; border-radius:6px;" id="tabs-row">
+    <button id="tab-both" data-sport="both" class="tab-btn active" onclick="setView('both')" style="flex:1; background:white; border:none; padding:8px; border-radius:4px; font-weight:600; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.1);">📊 Übersicht</button>
+    <button id="tab-run" data-sport="run" class="tab-btn" onclick="setView('run')" style="flex:1; background:transparent; border:none; padding:8px; border-radius:4px; font-weight:600; cursor:pointer; color:var(--muted);">🏃 Laufen</button>
+    <button id="tab-strength" data-sport="strength" class="tab-btn" onclick="setView('strength')" style="flex:1; background:transparent; border:none; padding:8px; border-radius:4px; font-weight:600; cursor:pointer; color:var(--muted);">💪 Krafttraining</button>
+    <button id="tab-bike" data-sport="bike" class="tab-btn" onclick="setView('bike')" style="display:none; flex:1; background:transparent; border:none; padding:8px; border-radius:4px; font-weight:600; cursor:pointer; color:var(--muted);">🚴 Radfahren</button>
+    <button id="tab-swim" data-sport="swim" class="tab-btn" onclick="setView('swim')" style="display:none; flex:1; background:transparent; border:none; padding:8px; border-radius:4px; font-weight:600; cursor:pointer; color:var(--muted);">🏊 Schwimmen</button>
+    <button id="tab-mobility" data-sport="mobility" class="tab-btn" onclick="setView('mobility')" style="display:none; flex:1; background:transparent; border:none; padding:8px; border-radius:4px; font-weight:600; cursor:pointer; color:var(--muted);">🧘 Mobility</button>
+    <button id="tab-hike" data-sport="hike" class="tab-btn" onclick="setView('hike')" style="display:none; flex:1; background:transparent; border:none; padding:8px; border-radius:4px; font-weight:600; cursor:pointer; color:var(--muted);">🥾 Wandern</button>
   </div>
 </div>
+
+<script>
+/* Tab-Visibility nach userConfig.sports[] */
+function applySportsVisibility(sports) {
+  if (!sports || !sports.length) sports = ['run','strength','mobility'];
+  const allSports = ['run','strength','bike','swim','mobility','hike'];
+  allSports.forEach(s => {
+    const btn = document.getElementById('tab-'+s);
+    if (btn) btn.style.display = sports.includes(s) ? '' : 'none';
+  });
+  // Wenn aktuell aktiver Tab nicht in sports → fallback auf "both"
+  const cur = localStorage.getItem('dashboardView') || 'both';
+  if (cur !== 'both' && !sports.includes(cur)) {
+    setView('both');
+  }
+  // Wenn nur 1 Sport: Tabs-Card komplett verstecken (kein Switch nötig)
+  const tabsCard = document.getElementById('tabs-container');
+  if (tabsCard) tabsCard.style.display = sports.length <= 1 ? 'none' : '';
+  // data-view-Elemente: blende run-only/strength-only Sektionen aus, falls Sport nicht aktiv
+  document.querySelectorAll('[data-view]').forEach(el => {
+    const views = el.getAttribute('data-view').split(',').map(s => s.trim());
+    // Wenn ein view explizit eine Sportart ist und die nicht aktiv: hide
+    const sportViews = views.filter(v => allSports.includes(v));
+    if (sportViews.length > 0 && !sportViews.some(v => sports.includes(v))) {
+      el.dataset.hiddenBySport = '1';
+    } else {
+      delete el.dataset.hiddenBySport;
+    }
+  });
+  // Re-apply current view filter to respect sport visibility
+  if (typeof setView === 'function') setView(localStorage.getItem('dashboardView') || 'both');
+}
+</script>
 
 <script>
 function setView(view) {
@@ -664,13 +963,15 @@ function setView(view) {
     setTimeout(() => initStrengthTopSetsChart(), 50);
   }
   document.querySelectorAll('[data-view]').forEach(el => {
-    const allowed = el.getAttribute('data-view').split(',');
-    el.style.display = (view === 'both' || allowed.includes(view)) ? '' : 'none';
+    const allowed = el.getAttribute('data-view').split(',').map(s=>s.trim());
+    const isVisible = view === 'both' || allowed.includes(view);
+    const hiddenBySport = el.dataset.hiddenBySport === '1';
+    el.style.display = (isVisible && !hiddenBySport) ? '' : 'none';
   });
   document.querySelectorAll('.tab-btn').forEach(b => {
     b.style.background = 'transparent'; b.style.color = 'var(--muted)'; b.style.boxShadow = '';
   });
-  const active = document.getElementById('tab-' + (view==='both'?'both':view==='run'?'run':'strength'));
+  const active = document.getElementById('tab-' + view);
   if (active) { active.style.background = 'white'; active.style.color = 'var(--text)'; active.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)'; }
   localStorage.setItem('dashboardView', view);
 }
@@ -721,9 +1022,16 @@ function renderLTHR() {
 </script>
 
 <div data-view="both">
-<h2>📍 Nächste Aktivität</h2>
-<div class="card" id="next-workout-card" style="background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%); color:white; border:none;">
-<div id="next-workout-content"><div class="muted" style="color:#cbd5e1;">⏳ Lade…</div></div>
+<h2>📍 Letzte & Nächste Einheit</h2>
+<div class="grid cols-2" id="last-next-grid">
+  <div class="card" id="last-activity-card" style="background:linear-gradient(135deg,#06B6D4 0%,#0891B2 100%); color:white; border:none;">
+    <div style="font-size:11px; text-transform:uppercase; color:#cffafe; letter-spacing:.5px; margin-bottom:8px;">✅ Letzte erledigte Einheit</div>
+    <div id="last-activity-content"><div style="color:#cffafe;">⏳ Lade aus Strava…</div></div>
+  </div>
+  <div class="card" id="next-workout-card" style="background:linear-gradient(135deg,#0A2540 0%,#1E3A5F 100%); color:white; border:none;">
+    <div style="font-size:11px; text-transform:uppercase; color:#7DD3FC; letter-spacing:.5px; margin-bottom:8px;">📍 Nächste anstehende Einheit</div>
+    <div id="next-workout-content"><div style="color:#7DD3FC;">⏳ Lade…</div></div>
+  </div>
 </div>
 
 <script>
@@ -941,9 +1249,152 @@ function analyzeActivity(activity, dayOfWeek) {
 function getLatestActivity() {
   const acts = window.lastStravaActivities || [];
   if (!acts.length) return null;
-  const relevant = acts.filter(a => ['Run','WeightTraining','Ride','Workout','Yoga','VirtualRide','TrailRun'].includes(a.type));
+  const relevant = acts.filter(a => ['Run','WeightTraining','Ride','Workout','Yoga','VirtualRide','TrailRun','Swim','Hike','Walk'].includes(a.type));
   if (!relevant.length) return null;
   return relevant.slice().sort((a,b)=>new Date(b.start_date)-new Date(a.start_date))[0];
+}
+
+function renderLastActivity() {
+  const target = document.getElementById('last-activity-content');
+  if (!target) return;
+  const a = getLatestActivity();
+  if (!a) {
+    target.innerHTML = '<div style="color:#cffafe;">Noch keine Strava-Aktivität gefunden. Nach Sync erscheint hier deine letzte Einheit.</div>';
+    return;
+  }
+  const analysis = analyzeActivity(a);
+  const d = new Date(a.start_date);
+  const dStr = d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}) + ' ' + d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  const daysAgo = Math.floor((new Date() - d) / (1000*60*60*24));
+  const daysAgoStr = daysAgo === 0 ? 'heute' : daysAgo === 1 ? 'gestern' : `vor ${daysAgo} Tagen`;
+  const typeEmoji = { Run:'🏃', WeightTraining:'💪', Ride:'🚴', Swim:'🏊', Yoga:'🧘', Hike:'🥾', Walk:'🚶' }[a.type] || '🏅';
+  const km = a.distance ? (a.distance/1000).toFixed(2) + ' km' : '';
+  const dur = Math.round(a.moving_time / 60) + ' min';
+  const paceSec = a.distance > 0 ? Math.round(a.moving_time / (a.distance/1000)) : 0;
+  const pace = paceSec ? `${Math.floor(paceSec/60)}:${String(paceSec%60).padStart(2,'0')}/km` : '';
+  const hf = a.average_heartrate ? `${Math.round(a.average_heartrate)} bpm avg` : '';
+  const elev = a.total_elevation_gain ? `${Math.round(a.total_elevation_gain)} m ↗` : '';
+  const meta = [km, dur, pace, hf, elev].filter(Boolean).join(' · ');
+
+  const analysisHTML = analysis && analysis.analysis && analysis.analysis.length
+    ? analysis.analysis.map(p => {
+        const c = p.c === 'good' ? '✅' : p.c === 'warn' ? '⚠️' : 'ℹ️';
+        const col = p.c === 'good' ? '#bbf7d0' : p.c === 'warn' ? '#fde68a' : '#bfdbfe';
+        return `<div style="font-size:11px; color:${col}; margin-top:2px;">${c} ${p.t}</div>`;
+      }).join('')
+    : '';
+
+  // RPE-Anzeige falls schon eingetragen
+  const rpeKey = 'rpe_' + a.id;
+  const rpe = localStorage.getItem(rpeKey);
+  const rpeStr = rpe ? `<div style="margin-top:6px; padding:4px 8px; background:rgba(255,255,255,0.15); border-radius:4px; display:inline-block; font-size:11px;">RPE: <strong>${rpe}/10</strong></div>` : `<button onclick="askRPE('${a.id}')" style="margin-top:6px; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3); color:white; padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer;">📊 RPE eintragen</button>`;
+
+  target.innerHTML = `
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div style="font-size:28px;">${typeEmoji}</div>
+      <div style="flex:1;">
+        <div style="font-weight:700; font-size:15px;">${a.name || a.type}</div>
+        <div style="font-size:11px; color:#cffafe;">${dStr} · ${daysAgoStr}</div>
+      </div>
+    </div>
+    <div style="margin-top:8px; font-size:12px; color:#cffafe;">${meta}</div>
+    <div style="margin-top:8px;">${analysisHTML}</div>
+    ${rpeStr}
+    <div style="margin-top:8px;"><a href="https://strava.com/activities/${a.id}" target="_blank" style="color:#7DD3FC; font-size:11px;">Auf Strava ansehen ↗</a></div>
+  `;
+}
+
+function askRPE(activityId) {
+  const rpe = prompt('Wie hart war diese Einheit? (1=sehr einfach, 10=maximal)\n\n1-3 = locker / recovery\n4-5 = moderat / Z2\n6-7 = anstrengend / Z3-Z4\n8-9 = hart / Z4-Z5\n10 = maximal');
+  if (!rpe) return;
+  const n = parseInt(rpe, 10);
+  if (!isFinite(n) || n < 1 || n > 10) { alert('Bitte Zahl 1-10 eingeben.'); return; }
+  localStorage.setItem('rpe_' + activityId, String(n));
+  // Snooze-Flag löschen falls vorhanden
+  localStorage.removeItem('rpe_snooze_' + activityId);
+  renderLastActivity();
+}
+
+// Auto-Trigger: nach Strava-Sync, wenn neue Activity (last 24h) noch keinen RPE hat
+function maybeTriggerRPE(activities) {
+  const cfg = window.USER_CONFIG || JSON.parse(localStorage.getItem('userConfig') || 'null');
+  if (!cfg || !cfg.settings || !cfg.settings.rpeAfterSync) return;
+  if (!activities || !activities.length) return;
+  const now = Date.now();
+  const recent = activities.filter(a => {
+    const t = new Date(a.start_date).getTime();
+    return (now - t) < 24*3600*1000 && (now - t) > 0;  // letzte 24h
+  });
+  if (!recent.length) return;
+  const noRPE = recent.find(a => {
+    if (localStorage.getItem('rpe_' + a.id)) return false;
+    const snooze = parseInt(localStorage.getItem('rpe_snooze_' + a.id) || '0', 10);
+    if (snooze && snooze > now) return false;  // noch gesnoozed
+    return true;
+  });
+  if (!noRPE) return;
+  // Modal anzeigen
+  setTimeout(() => showRPEModal(noRPE), 800);
+}
+
+function showRPEModal(activity) {
+  // Inline-Modal
+  let overlay = document.getElementById('rpe-modal-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'rpe-modal-overlay';
+    overlay.className = 'wiz-overlay';
+    overlay.innerHTML = `
+      <div class="wiz-modal" style="max-width:480px;">
+        <div class="wiz-header">
+          <h2>📊 Wie war's?</h2>
+          <div class="sub">RPE für die letzte Einheit eintragen</div>
+        </div>
+        <div class="wiz-body" id="rpe-modal-body"></div>
+        <div class="wiz-footer">
+          <button class="skip" onclick="snoozeRPE()">In 4h erinnern</button>
+          <button class="ghost" onclick="dismissRPE()">Überspringen</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+  }
+  window._currentRPEActivity = activity;
+  const d = new Date(activity.start_date);
+  const dStr = d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}) + ' · ' + d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+  document.getElementById('rpe-modal-body').innerHTML = `
+    <div style="margin-bottom:14px;">
+      <div style="font-weight:700; font-size:15px;">${activity.name || activity.type}</div>
+      <div style="font-size:12px; color:var(--muted);">${dStr} · ${Math.round(activity.moving_time/60)} min</div>
+    </div>
+    <p>Wie hat sich diese Einheit angefühlt? (RPE 1-10)</p>
+    <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-top:10px;">
+      ${[1,2,3,4,5,6,7,8,9,10].map(n => {
+        const lbl = n<=3?'leicht':n<=5?'moderat':n<=7?'anstrengend':n<=9?'hart':'maximal';
+        const col = n<=3?'#10B981':n<=5?'#06B6D4':n<=7?'#F59E0B':n<=9?'#F97316':'#EF4444';
+        return `<button onclick="submitRPE(${n})" style="padding:14px 6px; border:2px solid var(--border); background:white; border-radius:8px; cursor:pointer; font-weight:700; transition:all .1s;" onmouseover="this.style.borderColor='${col}'; this.style.background='${col}'; this.style.color='white';" onmouseout="this.style.borderColor='var(--border)'; this.style.background='white'; this.style.color='var(--text)';"><div style="font-size:18px;">${n}</div><div style="font-size:9px; font-weight:400; text-transform:uppercase; letter-spacing:.3px;">${lbl}</div></button>`;
+      }).join('')}
+    </div>
+    <div class="wiz-info" style="margin-top:14px;">💡 Hilft Plan-Anpassung: Konsistent hohe RPE (8+) bei Easy-Einheiten = Tendenz zu reduzieren. Konsistent niedrige RPE (≤3) bei harten Einheiten = du kannst mehr.</div>
+  `;
+  overlay.classList.remove('hidden');
+}
+function submitRPE(n) {
+  const a = window._currentRPEActivity;
+  if (!a) return dismissRPE();
+  localStorage.setItem('rpe_' + a.id, String(n));
+  localStorage.removeItem('rpe_snooze_' + a.id);
+  dismissRPE();
+  if (typeof renderLastActivity === 'function') renderLastActivity();
+  if (typeof recomputeAdaptivePlan === 'function') recomputeAdaptivePlan();
+}
+function snoozeRPE() {
+  const a = window._currentRPEActivity;
+  if (a) localStorage.setItem('rpe_snooze_' + a.id, String(Date.now() + 4*3600*1000));
+  dismissRPE();
+}
+function dismissRPE() {
+  const overlay = document.getElementById('rpe-modal-overlay');
+  if (overlay) overlay.classList.add('hidden');
 }
 
 
@@ -1538,7 +1989,9 @@ async function stravaPull() {
     document.getElementById('strava-sync').textContent = `Sync: ${new Date().toLocaleTimeString('de-DE')}`;
     window.lastStravaActivities = acts;
     updateChartsFromStrava(acts);
-    renderNextWorkout();
+    if (typeof renderNextWorkout === 'function') renderNextWorkout();
+    if (typeof renderLastActivity === 'function') renderLastActivity();
+    if (typeof maybeTriggerRPE === 'function') maybeTriggerRPE(acts);
     document.getElementById('strava-msg').innerHTML = `<div class="alert success">✅ ${acts.length} Aktivitäten · Charts live aktualisiert</div>`;
     setTimeout(()=>{document.getElementById('strava-msg').innerHTML='';}, 2500);
   } catch(e) {
